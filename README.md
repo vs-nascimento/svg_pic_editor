@@ -61,7 +61,7 @@ class MyApp extends StatelessWidget {
         appBar: AppBar(title: Text('SvgPicEditor Example')),
         body: Center(
           child: SvgPicEditor.asset(
-            assetName: 'assets/exemplo.svg',
+            'assets/exemplo.svg',
             modifications: [
               ElementSvg(
                 id: 'elemento1',
@@ -91,7 +91,7 @@ Carrega um SVG de um asset local:
 
 ```dart
 SvgPicEditor.asset(
-  assetName: 'assets/seu_arquivo.svg',
+  'assets/seu_arquivo.svg',
   package: 'seu_pacote',
   modifications: [/* Lista de ElementSvg */],
   width: 100.0,
@@ -108,7 +108,7 @@ Carrega um SVG a partir de uma URL:
 
 ```dart
 SvgPicEditor.network(
-  svgUrl: 'https://exemplo.com/seu/svg.svg',
+  'https://exemplo.com/seu/svg.svg',
   modifications: [/* Lista de ElementSvg */],
   width: 100.0,
   height: 100.0,
@@ -124,7 +124,7 @@ Carrega um SVG a partir de uma string SVG:
 
 ```dart
 SvgPicEditor.string(
-  svgString: '<svg>...</svg>',
+  '<svg>...</svg>',
   modifications: [/* Lista de ElementSvg */],
   width: 100.0,
   height: 100.0,
@@ -187,7 +187,7 @@ Aqui está um exemplo que usa o **SvgPicEditor** com várias modificações apli
 
 ```dart
 SvgPicEditor.asset(
-  assetName: 'assets/exemplo.svg',
+  'assets/exemplo.svg',
   modifications: [
     ElementSvg(
       id: 'rect1',
@@ -219,7 +219,7 @@ Aqui estão mais exemplos de uso do **SvgPicEditor**, demonstrando como utilizar
 
 ```dart
 SvgPicEditor.asset(
-  assetName: 'assets/exemplo.svg',
+  'assets/exemplo.svg',
   modifications: [
     ElementSvg(
       querySelector: '#elemento1',  // Seleciona o elemento com o ID 'elemento1'
@@ -241,7 +241,7 @@ SvgPicEditor.asset(
 
 ```dart
 SvgPicEditor.network(
-  svgUrl: 'https://exemplo.com/seu/svg.svg',
+  'https://exemplo.com/seu/svg.svg',
   modifications: [
     ElementSvg(
       querySelector: '[data-tipo="especial"]',  // Seleciona elementos pelo atributo 'data-tipo'
@@ -262,7 +262,7 @@ SvgPicEditor.network(
 
 ```dart
 SvgPicEditor.string(
-  svgString: '<svg>...</svg>',
+  '<svg>...</svg>',
   modifications: [
     ElementSvg(
       querySelector: 'rect#retangulo1',  // Seleciona um retângulo com o ID 'retangulo1'
