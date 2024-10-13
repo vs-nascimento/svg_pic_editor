@@ -30,8 +30,8 @@ class _MyAppState extends State<MyApp> {
   }
 
   _getSvgMapperParts() async {
-    List<SvgElement> assets =
-    await mapperParts.loadAsset(assetPath: 'assets/test.svg', partNames: []);
+    List<SvgElement> assets = await mapperParts
+        .loadAsset(assetPath: 'assets/test.svg', partNames: []);
     parts.addAll(assets);
     setState(() {});
   }
@@ -45,28 +45,26 @@ class _MyAppState extends State<MyApp> {
       body: Column(
         children: [
           ValueListenableBuilder<String?>(
-            valueListenable: selectedPart,
-            builder: (context, value, child) {
-              return Expanded(
-                flex: 3,
-                child: Center(
-                  child: SvgPicEditor.asset(
-                    assetName: 'assets/test.svg',
-                    width: 200,
-                    height: 200,
-                    fit: BoxFit.cover,
-                    modifications: [
-                      ElementSvg(
-                        querySelector: 'cor=#68A240',
-                        fillColor: Colors.red ,
-                      ),
-
-                    ],
+              valueListenable: selectedPart,
+              builder: (context, value, child) {
+                return Expanded(
+                  flex: 3,
+                  child: Center(
+                    child: SvgPicEditor.asset(
+                      assetName: 'assets/test.svg',
+                      width: 200,
+                      height: 200,
+                      fit: BoxFit.cover,
+                      modifications: [
+                        ElementSvg(
+                          querySelector: 'color=#68A240',
+                          fillColor: Colors.red,
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              );
-            }
-          ),
+                );
+              }),
         ],
       ),
     );
