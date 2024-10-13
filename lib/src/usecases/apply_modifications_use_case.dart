@@ -13,11 +13,11 @@ class ApplyModificationsUseCase {
 
     if (applyModification) {
       if (entity.fillColor != null) {
-          element.setAttribute('fill', _colorToSvgString(entity.fillColor!));
+        element.setAttribute('fill', _colorToSvgString(entity.fillColor!));
       }
 
       if (entity.strokeColor != null) {
-          element.setAttribute('stroke', _colorToSvgString(entity.strokeColor!));
+        element.setAttribute('stroke', _colorToSvgString(entity.strokeColor!));
       }
 
       if (entity.strokeWidth != null) {

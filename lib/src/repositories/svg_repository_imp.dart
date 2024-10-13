@@ -100,12 +100,12 @@ class SvgRepositoryImpl implements SvgRepository {
     }
   }
 
-// Função auxiliar para obter o valor de uma propriedade no estilo
-  String? _getStyleValue(String style, String property) {
-    final regex = RegExp(r'${property}\s*:\s*([^;]+)');
-    final match = regex.firstMatch(style);
-    return match?.group(1);
-  }
+// //Função auxiliar para obter o valor de uma propriedade no estilo
+//   String? _getStyleValue(String style, String property) {
+//     final regex = RegExp(r'${property}\s*:\s*([^;]+)');
+//     final match = regex.firstMatch(style);
+//     return match?.group(1);
+//   }
 
 // Função auxiliar para atualizar ou adicionar um valor no estilo
   String _updateStyleValue(String style, String property, String value) {
@@ -126,7 +126,6 @@ class SvgRepositoryImpl implements SvgRepository {
   }
 
   String _colorToSvgString(Color color) {
-    final alpha = color.alpha.toRadixString(16).padLeft(2, '0').toUpperCase();
     final red = color.red.toRadixString(16).padLeft(2, '0').toUpperCase();
     final green = color.green.toRadixString(16).padLeft(2, '0').toUpperCase();
     final blue = color.blue.toRadixString(16).padLeft(2, '0').toUpperCase();
@@ -148,17 +147,19 @@ class SvgRepositoryImpl implements SvgRepository {
     final classPattern = RegExp(r'\.([a-zA-Z\-_]+)');
     final elementPattern = RegExp(r'!([a-zA-Z\-_]+)');
     final attributePattern = RegExp(r'\[([a-zA-Z\-]+)([~|^$*]?=)"([^"]*)"\]');
-    final colorPattern = RegExp(r'cor=([#a-fA-F0-9]+)');
+    final colorPattern = RegExp(r'color=([#a-fA-F0-9]+)');
 
     // Inicializa elementos com todos os elementos XML
-    Iterable<xml.XmlElement> elements = document.descendants.whereType<xml.XmlElement>();
+    Iterable<xml.XmlElement> elements =
+        document.descendants.whereType<xml.XmlElement>();
 
     // Processa o seletor de elemento (!element)
     final elementMatch = elementPattern.firstMatch(querySelector);
     if (elementMatch != null) {
       final elementName = elementMatch.group(1);
       if (elementName != null) {
-        elements = elements.where((element) => element.name.local == elementName);
+        elements =
+            elements.where((element) => element.name.local == elementName);
       }
     }
 
@@ -167,7 +168,8 @@ class SvgRepositoryImpl implements SvgRepository {
     if (idMatch != null) {
       final id = idMatch.group(1);
       if (id != null) {
-        elements = elements.where((element) => element.getAttribute('id') == id);
+        elements =
+            elements.where((element) => element.getAttribute('id') == id);
       }
     }
 
@@ -187,7 +189,6 @@ class SvgRepositoryImpl implements SvgRepository {
     final attributeMatches = attributePattern.allMatches(querySelector);
     for (final attributeMatch in attributeMatches) {
       final attributeName = attributeMatch.group(1); // Nome do atributo
-      final operator = attributeMatch.group(2); // Operador (não usado aqui)
       final attributeValue = attributeMatch.group(3); // Valor do atributo
 
       if (attributeName != null && attributeValue != null) {
@@ -212,7 +213,8 @@ class SvgRepositoryImpl implements SvgRepository {
           // Verifica se a cor está no fill, stroke ou no estilo
           return (fillColor != null && fillColor == color) ||
               (strokeColor != null && strokeColor == color) ||
-              (style?.contains('fill:$color') == true || style?.contains('stroke:$color') == true);
+              (style?.contains('fill:$color') == true ||
+                  style?.contains('stroke:$color') == true);
         });
       }
     }

@@ -1,11 +1,9 @@
-
 import '../models/svg_element.dart';
 import '../repositories/svg_repository.dart';
 import '../repositories/svg_repository_imp.dart';
 
 class SvgMapperParts {
   final SvgRepository _repository = SvgRepositoryImpl();
-
 
   Future<List<SvgElement>> loadAsset(
       {required String assetPath, required List<String> partNames}) async {

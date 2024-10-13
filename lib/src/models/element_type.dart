@@ -1,3 +1,1 @@
-
-enum ElementType { path, rect, circle, ellipse, line ,query}
-
+enum ElementType { path, rect, circle, ellipse, line, query }

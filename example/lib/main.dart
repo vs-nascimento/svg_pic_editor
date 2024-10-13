@@ -9,32 +9,8 @@ void main() {
   ));
 }
 
-class MyApp extends StatefulWidget {
+class MyApp extends StatelessWidget {
   const MyApp({super.key});
-
-  @override
-  State<MyApp> createState() => _MyAppState();
-}
-
-class _MyAppState extends State<MyApp> {
-  late SvgMapperParts mapperParts;
-  final List<SvgElement> parts = [];
-  final ValueNotifier<Color> color = ValueNotifier<Color>(Colors.red);
-  final ValueNotifier<String?> selectedPart = ValueNotifier<String?>(null);
-
-  @override
-  void initState() {
-    super.initState();
-    mapperParts = SvgMapperParts();
-    _getSvgMapperParts();
-  }
-
-  _getSvgMapperParts() async {
-    List<SvgElement> assets = await mapperParts
-        .loadAsset(assetPath: 'assets/test.svg', partNames: []);
-    parts.addAll(assets);
-    setState(() {});
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,27 +20,23 @@ class _MyAppState extends State<MyApp> {
       ),
       body: Column(
         children: [
-          ValueListenableBuilder<String?>(
-              valueListenable: selectedPart,
-              builder: (context, value, child) {
-                return Expanded(
-                  flex: 3,
-                  child: Center(
-                    child: SvgPicEditor.asset(
-                      assetName: 'assets/test.svg',
-                      width: 200,
-                      height: 200,
-                      fit: BoxFit.cover,
-                      modifications: [
-                        ElementSvg(
-                          querySelector: 'color=#68A240',
-                          fillColor: Colors.red,
-                        ),
-                      ],
-                    ),
+          Expanded(
+            flex: 3,
+            child: Center(
+              child: SvgPicEditor.asset(
+                'assets/test.svg',
+                width: 200,
+                height: 200,
+                fit: BoxFit.cover,
+                modifications: [
+                  ElementSvg(
+                    querySelector: 'color=#68A240',
+                    fillColor: Colors.red,
                   ),
-                );
-              }),
+                ],
+              ),
+            ),
+          ),
         ],
       ),
     );

@@ -30,8 +30,8 @@ class SvgPicEditor extends StatefulWidget {
     this.color,
   }) : super(key: key);
 
-  static SvgPicEditor asset({
-    required String assetName,
+  static SvgPicEditor asset(
+    String assetName, {
     String? package,
     List<ElementSvg>? modifications,
     double? width,
@@ -52,8 +52,8 @@ class SvgPicEditor extends StatefulWidget {
     );
   }
 
-  static SvgPicEditor network({
-    required String svgUrl,
+  static SvgPicEditor network(
+    String svgUrl, {
     List<ElementSvg>? modifications,
     double? width,
     double? height,
@@ -72,8 +72,8 @@ class SvgPicEditor extends StatefulWidget {
     );
   }
 
-  static SvgPicEditor string({
-    required String svgString,
+  static SvgPicEditor string(
+    String svgString, {
     List<ElementSvg>? modifications,
     double? width,
     double? height,
@@ -150,11 +150,12 @@ class SvgPicEditorState extends State<SvgPicEditor> {
 
   // Limpa conteúdo de estilo e script do SVG para evitar problemas de compatibilidade
   String _cleanSvg(String svgContent) {
-    try{
+    try {
       final stylePattern = RegExp(r'<style[\s\S]*?</style>', multiLine: true);
       svgContent = svgContent.replaceAll(stylePattern, '');
 
-      final scriptPattern = RegExp(r'<script[\s\S]*?</script>', multiLine: true);
+      final scriptPattern =
+          RegExp(r'<script[\s\S]*?</script>', multiLine: true);
       svgContent = svgContent.replaceAll(scriptPattern, '');
 
       return svgContent;
@@ -186,7 +187,6 @@ class SvgPicEditorState extends State<SvgPicEditor> {
           color: Colors.white,
         ),
       );
-
     }
   }
 }

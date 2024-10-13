@@ -283,27 +283,4 @@ SvgPicEditor.string(
   fit: BoxFit.contain,
 );
 ```
-
-### Exemplo 4: Usando `querySelector` para Selecionar Elementos SVG Complexos
-
-```dart
-SvgPicEditor.asset(
-  assetName: 'assets/complexo.svg',
-  modifications: [
-    ElementSvg(
-      querySelector: 'g#grupo1 > rect',  // Seleciona retângulos dentro de um grupo com ID 'grupo1'
-      fillColor: Colors.red,
-    ),
-    ElementSvg(
-      querySelector: 'g#grupo2 circle',  // Seleciona círculos dentro de um grupo com ID 'grupo2'
-      fillColor: Colors.blue,
-      opacity: 0.5,
-    ),
-  ],
-  width: 300.0,
-  height: 300.0,
-  fit: BoxFit.cover,
-);
-```
-
 Esses exemplos demonstram a flexibilidade do **SvgPicEditor** e sua capacidade de modificar SVGs de forma dinâmica e interativa.

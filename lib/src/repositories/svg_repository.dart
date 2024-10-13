@@ -1,4 +1,3 @@
-
 import 'package:xml/xml.dart' as xml;
 
 import '../models/element.dart';
@@ -19,7 +18,7 @@ abstract class SvgRepository {
 
   List<SvgElement> extractComponentPartsAsSvg({
     required xml.XmlDocument document,
-     List<String>? partNames,
+    List<String>? partNames,
   });
 
   Future<List<SvgElement>> extractComponentPartsAsSvgFromPathOrString({
