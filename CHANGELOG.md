@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.2]
+### Ajustes
+- Atualização dos exemplos no README para refletir as mudanças.
+
+### Notas
+- Correção de erros de digitação nos exemplos do README.
+
 ## [1.1.1]
 ### Ajustes
 - Atualização dos exemplos no README para refletir as mudanças.
