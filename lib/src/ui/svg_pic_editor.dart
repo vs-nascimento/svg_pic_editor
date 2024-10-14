@@ -174,7 +174,9 @@ class SvgPicEditorState extends State<SvgPicEditor> {
               width: widget.width,
               height: widget.height,
               fit: widget.fit,
-              color: widget.color,
+              colorFilter: widget.color != null
+                  ? ColorFilter.mode(widget.color!, BlendMode.srcIn)
+                  : null,
             )
           : const SizedBox();
     } catch (e) {
