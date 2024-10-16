@@ -1,6 +1,6 @@
 name: svg_pic_editor
 description: A Flutter plugin for SVG editing and manipulation.
-version: 1.1.2
+version: 1.2.0
 homepage: https://github.com/vs-nascimento/svg_pic_editor
 
 environment:
@@ -10,11 +10,11 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_svg: ^2.0.5
-  http: ^0.13.6
-  plugin_platform_interface: ^2.0.2
+  flutter_svg: ^2.0.10+1
+  http: ^1.2.2
+  plugin_platform_interface: ^2.1.8
   shimmer: ^3.0.0
-  xml: ^6.2.2
+  xml: ^6.5.0
 
 dev_dependencies:
   flutter_test:

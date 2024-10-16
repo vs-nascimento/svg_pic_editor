@@ -1,5 +1,28 @@
 # Changelog
 
+## [1.2.0]
+### Added
+- Support added for multiple platforms (Android, iOS, Web, Windows, macOS, Linux).
+- Adjustments to the homepage for better presentation and documentation.
+- New folder structure to facilitate code maintenance and navigation within the project.
+
+### Fixes
+- Removed deprecated color property in `SvgPicture`.
+- Adjustments to dependencies to support the new platforms.
+- Updated examples in the README to reflect recent changes.
+
+### Notes
+- This version includes significant improvements in project structure and user experience.
+- Multi-platform support allows for broader reach and better compatibility.
+- We recommend users test the functionalities on all supported platforms to ensure a consistent experience.
+
+## [1.1.3]
+### Fixes
+- Removed deprecated color property in SvgPicture.
+
+### Notes
+- Updated to remove deprecated color property in SvgPicture.
+
 ## [1.1.2]
 ### Fixes
 - Updated README examples to reflect recent changes.
