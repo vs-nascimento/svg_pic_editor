@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
+
 import '../../svg_pic_editor.dart';
 import '../usecases/load_network_svg_use_case.dart';
 import '../usecases/load_svg_use_case.dart';
@@ -98,6 +99,7 @@ class SvgPicEditor extends StatefulWidget {
 
 class SvgPicEditorState extends State<SvgPicEditor> {
   String? modifiedSvgString;
+  bool hasError = false; // Variável para controle de erro
 
   @override
   void initState() {
@@ -127,6 +129,8 @@ class SvgPicEditorState extends State<SvgPicEditor> {
         svgContent = widget.svgString!;
       } else if (widget.svgUrl != null) {
         svgContent = await loadNetworkSvg(widget.svgUrl!);
+      } else {
+        throw Exception('Nenhuma fonte SVG válida fornecida');
       }
 
       svgContent = _cleanSvg(svgContent);
@@ -139,11 +143,13 @@ class SvgPicEditorState extends State<SvgPicEditor> {
 
       setState(() {
         modifiedSvgString = modifiedSvg;
+        hasError = false; // Reinicia a variável de erro
       });
     } catch (e) {
       debugPrint('Erro ao modificar SVG: $e');
       setState(() {
         modifiedSvgString = null;
+        hasError = true; // Atualiza a variável de erro
       });
     }
   }
@@ -167,28 +173,33 @@ class SvgPicEditorState extends State<SvgPicEditor> {
 
   @override
   Widget build(BuildContext context) {
-    try {
-      return modifiedSvgString != null
-          ? SvgPicture.string(
-              modifiedSvgString!,
-              width: widget.width,
-              height: widget.height,
-              fit: widget.fit,
-              colorFilter: widget.color != null
-                  ? ColorFilter.mode(widget.color!, BlendMode.srcIn)
-                  : null,
-            )
-          : const SizedBox();
-    } catch (e) {
-      return Shimmer.fromColors(
-        baseColor: Colors.grey[300]!,
-        highlightColor: Colors.grey[100]!,
-        child: Container(
-          width: widget.width,
-          height: widget.height,
-          color: Colors.white,
-        ),
+    if (hasError) {
+      return const Center(
+        child: Icon(Icons.error, color: Colors.red),
       );
     }
+
+    if (modifiedSvgString != null) {
+      return SvgPicture.string(
+        modifiedSvgString!,
+        width: widget.width,
+        height: widget.height,
+        fit: widget.fit,
+        colorFilter: widget.color != null
+            ? ColorFilter.mode(widget.color!, BlendMode.srcIn)
+            : null,
+      );
+    }
+
+    return Shimmer.fromColors(
+      baseColor: Colors.grey[300]!,
+      highlightColor: Colors.grey[100]!,
+      child: SvgPicture.asset(
+        'assets/placeholder.svg',
+        width: widget.width,
+        height: widget.height,
+        fit: widget.fit,
+      ),
+    );
   }
 }

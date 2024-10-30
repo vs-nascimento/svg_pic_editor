@@ -1,35 +1,31 @@
-
----
 # SvgPicEditor
 
-**SvgPicEditor** is a Flutter widget that allows you to load and modify SVG files from various sources, such as
-
-local assets, SVG strings, or URLs. It provides the ability to make specific modifications to the SVG elements using the `ElementSvg` class, which facilitates changing properties such as color, opacity, transformation, and more.
+**SvgPicEditor** is a Flutter widget that enables loading and modifying SVG files from multiple sources, such as local assets, SVG strings, or URLs. This widget allows specific SVG elements to be modified using the `ElementSvg` class, making it easy to change properties like color, opacity, transformations, and more.
 
 ## Table of Contents
 
 - [Installation](#installation)
 - [Usage](#usage)
-    - [Importing](#importing)
-    - [Simple Example](#simple-example)
+    - [Import](#import)
+    - [Basic Example](#basic-example)
     - [Constructors](#constructors)
         - [SvgPicEditor.asset](#svgpiceditorasset)
         - [SvgPicEditor.network](#svgpiceditornetwork)
         - [SvgPicEditor.string](#svgpiceditorstring)
-    - [Properties](#svgpiceditor-properties)
+    - [Widget Properties](#widget-properties)
     - [Modification Example](#modification-example)
 - [Conclusion](#conclusion)
 
 ## Installation
 
-To add **SvgPicEditor** to your Flutter project, include the following code in your `pubspec.yaml`:
+To add **SvgPicEditor** to your Flutter project, include the following in your `pubspec.yaml`:
 
 ```yaml
 dependencies:
   svg_pic_editor: ^1.0.0
 ```
 
-Or use the command:
+Or run the command:
 
 ```bash
 flutter pub add svg_pic_editor
@@ -37,17 +33,17 @@ flutter pub add svg_pic_editor
 
 ## Usage
 
-### Importing
+### Import
 
-To use **SvgPicEditor**, import the package in the Dart file where you want to use it:
+To use **SvgPicEditor**, import the package in your Dart file:
 
 ```dart
 import 'package:svg_pic_editor/svg_pic_editor.dart';
 ```
 
-### Simple Example
+### Basic Example
 
-Here’s a basic example of using **SvgPicEditor** inside a Flutter widget:
+Below is a basic example of how to use **SvgPicEditor** inside a Flutter widget:
 
 ```dart
 import 'package:flutter/material.dart';
@@ -68,7 +64,7 @@ class MyApp extends StatelessWidget {
             'assets/example.svg',
             modifications: [
               ElementSvg(
-                id: 'element1',
+                querySelector: '#element1',
                 fillColor: Colors.red,
               ),
             ],
@@ -101,7 +97,7 @@ SvgPicEditor.asset(
   width: 100.0,
   height: 100.0,
   fit: BoxFit.contain,
-  querySelector: 'yourSelector',
+  querySelector: '#yourID',
   color: Colors.red,
 );
 ```
@@ -117,7 +113,7 @@ SvgPicEditor.network(
   width: 100.0,
   height: 100.0,
   fit: BoxFit.contain,
-  querySelector: 'yourSelector',
+  querySelector: '.yourClass',
   color: Colors.red,
 );
 ```
@@ -133,29 +129,29 @@ SvgPicEditor.string(
   width: 100.0,
   height: 100.0,
   fit: BoxFit.contain,
-  querySelector: 'yourSelector',
+  querySelector: '[attribute="value"]',
   color: Colors.red,
 );
 ```
 
-### Properties of SvgPicEditor Widget
+### Widget Properties
 
-Here are the main properties of the **SvgPicEditor** widget:
+Key properties of the **SvgPicEditor** widget:
 
-- **assetName** (`String?`): The name of the asset containing the SVG.
+- **assetName** (`String?`): The asset name containing the SVG.
 - **svgString** (`String?`): A string representing the SVG content.
-- **svgUrl** (`String?`): The URL of the SVG to load.
-- **package** (`String?`): The name of the package containing the asset.
-- **modifications** (`List<ElementSvg>?`): A list of modifications to be applied to the SVG.
-- **width** (`double?`): The width of the widget.
-- **height** (`double?`): The height of the widget.
-- **fit** (`BoxFit`): How the SVG should fit in the available space.
-- **querySelector** (`String?`): A query selector to choose specific elements.
-- **color** (`Color?`): Color to be applied to the SVG.
+- **svgUrl** (`String?`): The URL of the SVG to be loaded.
+- **package** (`String?`): The package name containing the asset.
+- **modifications** (`List<ElementSvg>?`): List of modifications to be applied to the SVG.
+- **width** (`double?`): Width of the widget.
+- **height** (`double?`): Height of the widget.
+- **fit** (`BoxFit`): How the SVG should fit within the available space.
+- **querySelector** (`String?`): A query selector to target specific elements.
+- **color** (`Color?`): Color to apply to the SVG.
 
 ### Modification Example
 
-The `ElementSvg` class allows you to perform specific modifications to SVG elements, such as color, opacity, and transformation.
+The `ElementSvg` class allows specific modifications to SVG elements, such as color, opacity, and transformations.
 
 ```dart
 class ElementSvg {
@@ -181,52 +177,20 @@ class ElementSvg {
 }
 ```
 
-### Example Usage with Modifications
+### Modification Examples Using querySelector
 
-Here’s an example that uses **SvgPicEditor** with several modifications applied to different SVG elements:
-
-```dart
-SvgPicEditor.asset(
-  'assets/example.svg',
-  modifications: [
-    ElementSvg(
-      id: 'rect1',
-      fillColor: Colors.blue,
-      strokeColor: Colors.black,
-      strokeWidth: 2.0,
-    ),
-    ElementSvg(
-      id: 'circle1',
-      fillColor: Colors.green,
-      opacity: 0.5,
-    ),
-  ],
-  width: 200.0,
-  height: 200.0,
-  fit: BoxFit.contain,
-);
-```
-
-In this example, the element `rect1` will have its fill color changed to blue, with a black stroke and a width of 2.0, while the element `circle1` will be filled green with 50% opacity.
-
-## Conclusion
-
-**SvgPicEditor** is a powerful and flexible tool for working with SVGs in Flutter. It allows you to easily customize the style and properties of SVG elements, providing support for local assets, SVG strings, and URLs.
-
-Here are more usage examples of **SvgPicEditor**, demonstrating how to use the `querySelector` property to select and modify SVG elements with greater flexibility:
-
-### Example 1: Using `querySelector` to Select Specific Elements
+#### Selecting Specific Elements with `querySelector`
 
 ```dart
 SvgPicEditor.asset(
   'assets/example.svg',
   modifications: [
     ElementSvg(
-      querySelector: '#element1',  // Selects the element with ID 'element1'
+      querySelector: '#element1',
       fillColor: Colors.red,
     ),
     ElementSvg(
-      querySelector: '.class1',  // Selects all elements with class 'class1'
+      querySelector: '.class1',
       strokeColor: Colors.blue,
       strokeWidth: 3.0,
     ),
@@ -237,18 +201,18 @@ SvgPicEditor.asset(
 );
 ```
 
-### Example 2: Modifying Elements with Multiple Attributes Using `querySelector`
+#### Modifying Elements with Specific Attributes Using `querySelector`
 
 ```dart
 SvgPicEditor.network(
   'https://example.com/your/svg.svg',
   modifications: [
     ElementSvg(
-      querySelector: '[data-type="special"]',  // Selects elements by 'data-type' attribute
+      querySelector: '[data-type="special"]',
       fillColor: Colors.green,
     ),
     ElementSvg(
-      querySelector: '[stroke="black"]',  // Selects elements with black stroke
+      querySelector: '[stroke="black"]',
       strokeColor: Colors.yellow,
     ),
   ],
@@ -258,31 +222,25 @@ SvgPicEditor.network(
 );
 ```
 
-### Example 3: Applying Modifications to Elements with Combined Selectors
+### Animation Examples with SvgPicEditor
+
+Below is an example of how to use custom animations for `SvgPicEditor`:
 
 ```dart
-SvgPicEditor.string(
-  '<svg>...</svg>',
+SvgPicEditor.asset(
+  'assets/example.svg',
   modifications: [
     ElementSvg(
-      querySelector: 'rect#rectangle1',  // Selects a rectangle with ID 'rectangle1'
+      querySelector: 'rect#rectangle',
       fillColor: Colors.orange,
     ),
-    ElementSvg(
-      querySelector: 'circle.class2',  // Selects a circle with class 'class2'
-      strokeColor: Colors.purple,
-      strokeWidth: 4.0,
-    ),
-    ElementSvg(
-      querySelector: 'path',  // Selects all 'path' elements
-      opacity: 0.7,
-    ),
   ],
-  width: 250.0,
-  height: 250.0,
-  fit: BoxFit.contain,
+).shake(
+  vsync: this,
+  duration: Duration(milliseconds: 500),
+  offset: 10.0,
+  isInfinite: true,
 );
 ```
-These examples demonstrate the flexibility of **SvgPicEditor** and its ability to dynamically and interactively modify SVGs.
 
----
+In this example, the selected element is animated with a shake effect, creating a horizontal oscillation movement.

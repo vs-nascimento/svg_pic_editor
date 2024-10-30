@@ -2,17 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:svg_pic_editor/svg_pic_editor.dart';
 
 void main() {
-  runApp(MaterialApp(
+  runApp(const MaterialApp(
     home: MyApp(),
   ));
 }
 
 class MyApp extends StatefulWidget {
+  const MyApp({super.key});
+
   @override
-  _MyAppState createState() => _MyAppState();
+  MyAppState createState() => MyAppState();
 }
 
-class _MyAppState extends State<MyApp> with TickerProviderStateMixin {
+class MyAppState extends State<MyApp> with TickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<Color?> _animation;
   late final GlobalKey<TickerProviderStateMixin> _key =

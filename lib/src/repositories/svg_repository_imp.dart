@@ -1,6 +1,6 @@
 import 'package:flutter/services.dart';
-import 'package:xml/xml.dart' as xml;
 import 'package:http/http.dart' as http;
+import 'package:xml/xml.dart' as xml;
 
 import '../models/element.dart';
 import '../models/svg_element.dart';
@@ -138,87 +138,62 @@ class SvgRepositoryImpl implements SvgRepository {
   }
 
   // Função para query avançada
+
   Iterable<xml.XmlElement> queryAdvanced({
     required xml.XmlDocument document,
     required String querySelector,
   }) {
-    // Expressões regulares para detectar padrões de atributos, ID, classe, elementos, e cor
-    final idPattern = RegExp(r'#([a-zA-Z\-_]+)');
-    final classPattern = RegExp(r'\.([a-zA-Z\-_]+)');
-    final elementPattern = RegExp(r'!([a-zA-Z\-_]+)');
-    final attributePattern = RegExp(r'\[([a-zA-Z\-]+)([~|^$*]?=)"([^"]*)"\]');
-    final colorPattern = RegExp(r'color=([#a-fA-F0-9]+)');
+    // Divide a consulta por "[" para separar o nome do elemento e os atributos
+    final splitQuery = querySelector.split('[');
+    final elementName = splitQuery[0];
+    int? index;
 
-    // Inicializa elementos com todos os elementos XML
-    Iterable<xml.XmlElement> elements =
-        document.descendants.whereType<xml.XmlElement>();
-
-    // Processa o seletor de elemento (!element)
-    final elementMatch = elementPattern.firstMatch(querySelector);
-    if (elementMatch != null) {
-      final elementName = elementMatch.group(1);
-      if (elementName != null) {
-        elements =
-            elements.where((element) => element.name.local == elementName);
-      }
+    // Verifica se o índice está no último componente entre colchetes
+    final lastPart = splitQuery.last;
+    if (RegExp(r'^\d+\]$').hasMatch(lastPart)) {
+      index = int.tryParse(lastPart.replaceAll(']', ''));
+      splitQuery.removeLast(); // Remove o índice da lista de atributos
     }
 
-    // Processa o seletor de ID (#id)
-    final idMatch = idPattern.firstMatch(querySelector);
-    if (idMatch != null) {
-      final id = idMatch.group(1);
-      if (id != null) {
-        elements =
-            elements.where((element) => element.getAttribute('id') == id);
-      }
-    }
+    final attributes =
+        splitQuery.sublist(1).map((attr) => attr.replaceAll(']', '')).toList();
 
-    // Processa o seletor de classe (.class)
-    final classMatches = classPattern.allMatches(querySelector);
-    for (final classMatch in classMatches) {
-      final className = classMatch.group(1);
-      if (className != null) {
+    // Filtra os elementos pelo nome
+    var elements = document.findAllElements(elementName);
+
+    // Filtra os elementos pelos atributos
+    if (attributes.isNotEmpty) {
+      for (final attribute in attributes) {
+        final splitAttribute = attribute.split('=');
+        final attributeName = splitAttribute[0];
+        final attributeValue = splitAttribute[1]
+            .substring(1, splitAttribute[1].length - 1); // Remove as aspas
+
         elements = elements.where((element) {
-          final classAttr = element.getAttribute('class');
-          return classAttr != null && classAttr.split(' ').contains(className);
+          final elementAttrValue = element.getAttribute(attributeName);
+          return elementAttrValue != null && elementAttrValue == attributeValue;
         });
       }
+    } else {
+      final elementName = splitQuery[0];
+      final String? id =
+          elementName.startsWith('#') ? elementName.substring(1) : null;
+      final String? className =
+          elementName.startsWith('.') ? elementName.substring(1) : null;
+      final int? childIndex = int.tryParse(elementName);
+
+      elements = queryElements(
+        document: document,
+        id: id,
+        className: className,
+        childIndex: childIndex,
+      );
     }
 
-    // Processa o seletor de atributo ([atributo="valor"])
-    final attributeMatches = attributePattern.allMatches(querySelector);
-    for (final attributeMatch in attributeMatches) {
-      final attributeName = attributeMatch.group(1); // Nome do atributo
-      final attributeValue = attributeMatch.group(3); // Valor do atributo
-
-      if (attributeName != null && attributeValue != null) {
-        elements = elements.where((element) {
-          final attribute = element.getAttribute(attributeName);
-          return attribute != null && attribute == attributeValue;
-        });
-      }
+    // Retorna apenas o elemento no índice especificado, ou todos se índice for nulo
+    if (index != null && index < elements.length) {
+      return [elements.elementAt(index)];
     }
-
-    // Processa o seletor de cor (cor="#123abc")
-    final colorMatch = colorPattern.firstMatch(querySelector);
-    if (colorMatch != null) {
-      final color = colorMatch.group(1);
-      if (color != null) {
-        elements = elements.where((element) {
-          // Verifica atributos fill, stroke e style
-          final fillColor = element.getAttribute('fill');
-          final strokeColor = element.getAttribute('stroke');
-          final style = element.getAttribute('style');
-
-          // Verifica se a cor está no fill, stroke ou no estilo
-          return (fillColor != null && fillColor == color) ||
-              (strokeColor != null && strokeColor == color) ||
-              (style?.contains('fill:$color') == true ||
-                  style?.contains('stroke:$color') == true);
-        });
-      }
-    }
-
     return elements;
   }
 
