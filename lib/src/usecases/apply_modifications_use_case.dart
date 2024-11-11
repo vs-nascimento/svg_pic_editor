@@ -1,10 +1,10 @@
-import 'package:xml/xml.dart' as xml;
 import 'package:flutter/material.dart';
+import 'package:xml/xml.dart' as xml;
 
 import '../models/element.dart';
 
 class ApplyModificationsUseCase {
-  void call(xml.XmlElement element, ElementSvg entity) {
+  void call(xml.XmlElement element, ElementEdit entity) {
     bool applyModification = false;
 
     if (entity.id != null && element.getAttribute('id') == entity.id) {

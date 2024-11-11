@@ -1,4 +1,21 @@
 ## Changelog
+
+## [3.0.0]
+### Improvements
+- Enhanced the search system with improved query handling for better performance and flexibility.
+- Refined the `listemEdit` functionality, which now returns the SVG string whenever an element is edited, including support for nullable attributes.
+- Introduced the `getColors` function that returns a `SvgColorElement`, containing two attributes: one for the color and another for a list of associated `SvgElement` elements.
+- Renamed the `ElementSvg` class to `ElementEdit` to better reflect its new functionality.
+
+### New Features
+- Added the `listemEdit` function, which provides real-time SVG string updates when elements are modified.
+- Introduced `getColors` function to facilitate easier extraction and modification of colors within an SVG.
+
+### Notes
+- This update focuses on enhancing the search functionality, adding new element editing features, and improving the handling of colors in SVG elements.
+- The renaming of `ElementSvg` to `ElementEdit` reflects a more appropriate naming convention after the recent changes.
+- Users are encouraged to try the new `listemEdit` and `getColors` functionalities to streamline their workflows.
+
 ## [2.0.1]
 ### Improvements
 - Readme updated with new features and examples.
@@ -100,32 +117,32 @@
 - Improved SVG cleanup method for better compatibility.
 
 ### Notes
-- Enhanced user experience durante o carregamento de SVG.
-- Refatoração do código para melhor clareza.
+- Enhanced user experience during the loading of SVG.
+- Refactoring of the code for better clarity.
 
 ## [1.0.2]
 ### Fixes
-- Ajustou os métodos de fábrica no SvgPicEditor; o primeiro argumento agora é automaticamente o contexto.
-- Atualizou exemplos no README para refletir mudanças recentes.
-- Corrigidos erros de digitação.
+- Adjusted factory methods in SvgPicEditor; the first argument is now automatically the context.
+- Updated examples in README to reflect recent changes.
+- Corrected typos.
 
 ### Notes
-- Ajustes na implementação do SvgPicEditor.
-- Melhorias na documentação do README.
+- Adjustments in the implementation of SvgPicEditor.
+- Improvements in the README documentation.
 
 ## [1.0.1]
 ### Added
-- Corrigida a convenção de nomenclatura de cores para cor.
+- Corrected the color naming convention to `color`.
 
 ### Notes
-- Corrigido um erro de digitação.
+- Fixed a typo error.
 
 ## [1.0.0]
 ### Added
-- Implementação inicial do **SvgPicEditor**.
-- Suporte para carregar SVG de ativos, URLs e strings.
-- Classe ElementSvg para modificar elementos SVG.
-- Exemplos de uso no README.
+- Initial implementation of **SvgPicEditor**.
+- Support for loading SVG from assets, URLs, and strings.
+- `ElementSvg` class for modifying SVG elements.
+- Usage examples in the README.
 
 ### Notes
-- Esta é a versão inicial e pode conter bugs ou limitações.
+- This is the initial version and may contain bugs or limitations.

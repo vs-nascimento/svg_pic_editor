@@ -2,6 +2,7 @@ import 'package:xml/xml.dart' as xml;
 import 'package:xml/xml.dart';
 
 import '../models/element.dart';
+import '../models/svg_color_element.dart';
 import '../repositories/svg_repository_imp.dart';
 
 class ModifySvgUseCase {
@@ -11,7 +12,7 @@ class ModifySvgUseCase {
 
   Future<String> call({
     required String svgContent,
-    required List<ElementSvg> elements,
+    required List<ElementEdit> elements,
   }) async {
     XmlDocument document = xml.XmlDocument.parse(svgContent);
 
@@ -35,5 +36,9 @@ class ModifySvgUseCase {
       }
     }
     return document.toXmlString(pretty: true);
+  }
+
+  Future<List<SvgColorElement>> getColors(String svgContent) {
+    return _repository.extractColorsAndElements(svgContent);
   }
 }

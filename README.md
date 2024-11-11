@@ -1,6 +1,6 @@
 # SvgPicEditor
 
-**SvgPicEditor** is a Flutter widget that enables loading and modifying SVG files from multiple sources, such as local assets, SVG strings, or URLs. This widget allows specific SVG elements to be modified using the `ElementSvg` class, making it easy to change properties like color, opacity, transformations, and more.
+**SvgPicEditor** is a Flutter widget that allows you to load and modify SVG files from various sources, such as local assets, SVG strings, or URLs. This widget also lets you modify specific SVG elements using the `ElementEdit` class, making it easy to change properties like color, opacity, transformations, and more. The new **listenEdit** and **getColors** features further expand the possibilities for manipulating and customizing SVGs.
 
 ## Table of Contents
 
@@ -14,6 +14,7 @@
         - [SvgPicEditor.string](#svgpiceditorstring)
     - [Widget Properties](#widget-properties)
     - [Modification Example](#modification-example)
+    - [New Feature Example](#new-feature-example)
 - [Conclusion](#conclusion)
 
 ## Installation
@@ -22,7 +23,7 @@ To add **SvgPicEditor** to your Flutter project, include the following in your `
 
 ```yaml
 dependencies:
-  svg_pic_editor: ^1.0.0
+  svg_pic_editor: ^3.0.0
 ```
 
 Or run the command:
@@ -35,7 +36,7 @@ flutter pub add svg_pic_editor
 
 ### Import
 
-To use **SvgPicEditor**, import the package in your Dart file:
+To use **SvgPicEditor**, import the package into your Dart file:
 
 ```dart
 import 'package:svg_pic_editor/svg_pic_editor.dart';
@@ -43,7 +44,7 @@ import 'package:svg_pic_editor/svg_pic_editor.dart';
 
 ### Basic Example
 
-Below is a basic example of how to use **SvgPicEditor** inside a Flutter widget:
+Here is a basic example of how to use **SvgPicEditor** inside a Flutter widget:
 
 ```dart
 import 'package:flutter/material.dart';
@@ -63,7 +64,7 @@ class MyApp extends StatelessWidget {
           child: SvgPicEditor.asset(
             'assets/example.svg',
             modifications: [
-              ElementSvg(
+              ElementEdit(
                 querySelector: '#element1',
                 fillColor: Colors.red,
               ),
@@ -71,6 +72,9 @@ class MyApp extends StatelessWidget {
             width: 200.0,
             height: 200.0,
             fit: BoxFit.contain,
+            listenEdit: (svgContent) {
+              print('Edited SVG content: $svgContent');
+            },
           ),
         ),
       ),
@@ -79,7 +83,7 @@ class MyApp extends StatelessWidget {
 }
 ```
 
-This example loads an SVG file from a local asset and changes the color of an SVG element with the ID `element1` to red.
+This example loads an SVG file from a local asset and changes the color of an SVG element with the ID `element1` to red. It also listens for changes in the SVG content and prints the updated content to the console.
 
 ### Constructors
 
@@ -92,13 +96,13 @@ Loads an SVG from a local asset:
 ```dart
 SvgPicEditor.asset(
   'assets/your_file.svg',
-  package: 'your_package',
-  modifications: [/* List of ElementSvg */],
+  modifications: [/* List of ElementEdit */],
   width: 100.0,
   height: 100.0,
   fit: BoxFit.contain,
   querySelector: '#yourID',
   color: Colors.red,
+  listenEdit: (svgContent) => print('Updated SVG: $svgContent'),
 );
 ```
 
@@ -109,12 +113,13 @@ Loads an SVG from a URL:
 ```dart
 SvgPicEditor.network(
   'https://example.com/your/svg.svg',
-  modifications: [/* List of ElementSvg */],
+  modifications: [/* List of ElementEdit */],
   width: 100.0,
   height: 100.0,
   fit: BoxFit.contain,
   querySelector: '.yourClass',
   color: Colors.red,
+  listenEdit: (svgContent) => print('SVG content: $svgContent'),
 );
 ```
 
@@ -125,36 +130,38 @@ Loads an SVG from an SVG string:
 ```dart
 SvgPicEditor.string(
   '<svg>...</svg>',
-  modifications: [/* List of ElementSvg */],
+  modifications: [/* List of ElementEdit */],
   width: 100.0,
   height: 100.0,
   fit: BoxFit.contain,
   querySelector: '[attribute="value"]',
   color: Colors.red,
+  listenEdit: (svgContent) => print('Updated SVG: $svgContent'),
 );
 ```
 
 ### Widget Properties
 
-Key properties of the **SvgPicEditor** widget:
+Main properties of the **SvgPicEditor** widget:
 
-- **assetName** (`String?`): The asset name containing the SVG.
+- **assetName** (`String?`): The name of the asset containing the SVG.
 - **svgString** (`String?`): A string representing the SVG content.
 - **svgUrl** (`String?`): The URL of the SVG to be loaded.
+- **listenEdit** (`Function(String)?`): A callback function to listen for changes in the SVG content.
 - **package** (`String?`): The package name containing the asset.
-- **modifications** (`List<ElementSvg>?`): List of modifications to be applied to the SVG.
-- **width** (`double?`): Width of the widget.
-- **height** (`double?`): Height of the widget.
+- **modifications** (`List<ElementEdit>?`): A list of modifications to apply to the SVG.
+- **width** (`double?`): The width of the widget.
+- **height** (`double?`): The height of the widget.
 - **fit** (`BoxFit`): How the SVG should fit within the available space.
-- **querySelector** (`String?`): A query selector to target specific elements.
-- **color** (`Color?`): Color to apply to the SVG.
+- **querySelector** (`String?`): A query selector to select specific elements.
+- **color** (`Color?`): The color to apply to the SVG.
 
 ### Modification Example
 
-The `ElementSvg` class allows specific modifications to SVG elements, such as color, opacity, and transformations.
+The `ElementEdit` class allows you to make specific modifications to SVG elements, such as changing the color, opacity, or applying transformations.
 
 ```dart
-class ElementSvg {
+class ElementEdit {
   final String? id;
   final Color? fillColor;
   final Color? strokeColor;
@@ -162,9 +169,8 @@ class ElementSvg {
   final double? opacity;
   final String? transform;
   final String? querySelector;
-  final String? cssInjector;
 
-  ElementSvg({
+  ElementEdit({
     this.id,
     this.fillColor,
     this.strokeColor,
@@ -172,75 +178,65 @@ class ElementSvg {
     this.opacity,
     this.transform,
     this.querySelector,
-    this.cssInjector,
   });
 }
 ```
 
-### Modification Examples Using querySelector
+### New Feature Example
 
-#### Selecting Specific Elements with `querySelector`
+#### Using `listenEdit` to Track Changes
+
+The `listenEdit` feature allows you to listen for edits made to the SVG content and get updates about the modified SVG.
 
 ```dart
 SvgPicEditor.asset(
   'assets/example.svg',
   modifications: [
-    ElementSvg(
+    ElementEdit(
       querySelector: '#element1',
       fillColor: Colors.red,
-    ),
-    ElementSvg(
-      querySelector: '.class1',
-      strokeColor: Colors.blue,
-      strokeWidth: 3.0,
     ),
   ],
   width: 200.0,
   height: 200.0,
   fit: BoxFit.contain,
+  listenEdit: (svgContent) {
+    // Whenever the SVG is edited, the updated content will be printed
+    print('Edited SVG content: $svgContent');
+  },
 );
 ```
 
-#### Modifying Elements with Specific Attributes Using `querySelector`
+#### Using `getColors` to Retrieve Colors from the SVG
 
-```dart
-SvgPicEditor.network(
-  'https://example.com/your/svg.svg',
-  modifications: [
-    ElementSvg(
-      querySelector: '[data-type="special"]',
-      fillColor: Colors.green,
-    ),
-    ElementSvg(
-      querySelector: '[stroke="black"]',
-      strokeColor: Colors.yellow,
-    ),
-  ],
-  width: 300.0,
-  height: 300.0,
-  fit: BoxFit.cover,
-);
-```
-
-### Animation Examples with SvgPicEditor
-
-Below is an example of how to use custom animations for `SvgPicEditor`:
+The `getColors` feature allows you to extract color information from an SVG. It returns an `SvgColorElement` containing the color and the elements associated with it in the SVG.
 
 ```dart
 SvgPicEditor.asset(
   'assets/example.svg',
   modifications: [
-    ElementSvg(
-      querySelector: 'rect#rectangle',
-      fillColor: Colors.orange,
+    ElementEdit(
+      querySelector: '#element1',
+      fillColor: Colors.red,
     ),
   ],
-).shake(
-  vsync: this,
-  duration: Duration(milliseconds: 500),
-  offset: 10.0,
-  isInfinite: true,
+  width: 200.0,
+  height: 200.0,
+  fit: BoxFit.contain,
+  getColor: (List<SvgColorElement> colors) {
+    // Retrieve the colors and associated elements from the SVG
+    colors.forEach((colorElement) {
+      print('Color: ${colorElement.color}');
+      colorElement.parts.forEach((part) { // List of associated elements
+        print('Element: ${part.querySelector}');
+      });
+    });
+  },
 );
 ```
 
-In this example, the selected element is animated with a shake effect, creating a horizontal oscillation movement.
+In the example above, `getColors` analyzes the edited SVG content and returns the colors found, as well as other elements associated with those colors in the SVG. This provides an efficient way to capture information about the visual elements of the SVG.
+
+### Conclusion
+
+With the new **listenEdit** and **getColors** features, **SvgPicEditor** becomes an even more powerful and flexible tool for manipulating and customizing SVGs in Flutter. Now, in addition to modifying SVG elements, you can track real-time edits and extract valuable information about the colors and elements within the SVG.

@@ -1,21 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
 
-import '../../svg_pic_editor.dart';
-import '../usecases/load_network_svg_use_case.dart';
-import '../usecases/load_svg_use_case.dart';
+import '../../../svg_pic_editor.dart';
+import '../../usecases/load_network_svg_use_case.dart';
+import '../../usecases/load_svg_use_case.dart';
 
 class SvgPicEditor extends StatefulWidget {
   final String? assetName;
   final String? svgString;
   final String? svgUrl;
   final String? package;
-  final List<ElementSvg>? modifications;
+  final List<ElementEdit>? modifications;
   final double? width;
   final double? height;
   final BoxFit fit;
   final String? querySelector;
   final Color? color;
+  final Function(String)? listenEdit;
+  final Function(List<SvgElement>)? getParts;
+  final Function(List<SvgColorElement>)? getColors;
 
   const SvgPicEditor._({
     Key? key,
@@ -29,17 +32,23 @@ class SvgPicEditor extends StatefulWidget {
     this.fit = BoxFit.contain,
     this.querySelector,
     this.color,
+    this.listenEdit,
+    this.getParts,
+    this.getColors,
   }) : super(key: key);
 
   static SvgPicEditor asset(
     String assetName, {
     String? package,
-    List<ElementSvg>? modifications,
+    List<ElementEdit>? modifications,
     double? width,
     double? height,
     BoxFit fit = BoxFit.contain,
     String? querySelector,
     Color? color,
+    Function(String)? listenEdit,
+    Function(List<SvgElement>)? getParts,
+    Function(List<SvgColorElement>)? getColors,
   }) {
     return SvgPicEditor._(
       assetName: assetName,
@@ -50,17 +59,23 @@ class SvgPicEditor extends StatefulWidget {
       fit: fit,
       querySelector: querySelector,
       color: color,
+      listenEdit: listenEdit,
+      getParts: getParts,
+      getColors: getColors,
     );
   }
 
   static SvgPicEditor network(
     String svgUrl, {
-    List<ElementSvg>? modifications,
+    List<ElementEdit>? modifications,
     double? width,
     double? height,
     BoxFit fit = BoxFit.contain,
     String? querySelector,
     Color? color,
+    Function(String)? listenEdit,
+    Function(List<SvgElement>)? getParts,
+    Function(List<SvgColorElement>)? getColors,
   }) {
     return SvgPicEditor._(
       svgUrl: svgUrl,
@@ -70,17 +85,23 @@ class SvgPicEditor extends StatefulWidget {
       fit: fit,
       querySelector: querySelector,
       color: color,
+      listenEdit: listenEdit,
+      getParts: getParts,
+      getColors: getColors,
     );
   }
 
   static SvgPicEditor string(
     String svgString, {
-    List<ElementSvg>? modifications,
+    List<ElementEdit>? modifications,
     double? width,
     double? height,
     BoxFit fit = BoxFit.contain,
     String? querySelector,
     Color? color,
+    Function(String)? listenEdit,
+    Function(List<SvgElement>)? getParts,
+    Function(List<SvgColorElement>)? getColors,
   }) {
     return SvgPicEditor._(
       svgString: svgString,
@@ -90,6 +111,9 @@ class SvgPicEditor extends StatefulWidget {
       fit: fit,
       querySelector: querySelector,
       color: color,
+      listenEdit: listenEdit,
+      getParts: getParts,
+      getColors: getColors,
     );
   }
 
@@ -105,6 +129,25 @@ class SvgPicEditorState extends State<SvgPicEditor> {
   void initState() {
     super.initState();
     _modifySvg();
+    if (widget.getParts != null) {
+      final svgMapperParts = SvgMapperParts();
+      if (widget.assetName != null) {
+        svgMapperParts.loadAsset(
+          assetPath: widget.assetName!,
+          partNames: [],
+        ).then((value) => widget.getParts!(value));
+      } else if (widget.svgString != null) {
+        svgMapperParts.loadString(
+          svgContent: widget.svgString!,
+          partNames: [],
+        ).then((value) => widget.getParts!(value));
+      } else if (widget.svgUrl != null) {
+        svgMapperParts.loadNetwork(
+          url: widget.svgUrl!,
+          partNames: [],
+        ).then((value) => widget.getParts!(value));
+      }
+    }
   }
 
   @override
@@ -135,6 +178,11 @@ class SvgPicEditorState extends State<SvgPicEditor> {
 
       svgContent = _cleanSvg(svgContent);
 
+      if (widget.getColors != null) {
+        final colors = await modifySvg.getColors(svgContent);
+        widget.getColors!(colors);
+      }
+
       // Aplica as modificações no SVG
       final modifiedSvg = await modifySvg(
         svgContent: svgContent,
@@ -149,8 +197,9 @@ class SvgPicEditorState extends State<SvgPicEditor> {
       debugPrint('Erro ao modificar SVG: $e');
       setState(() {
         modifiedSvgString = null;
-        hasError = true; // Atualiza a variável de erro
+        hasError = true;
       });
+      if (widget.listenEdit != null) widget.listenEdit!("");
     }
   }
 
@@ -180,6 +229,7 @@ class SvgPicEditorState extends State<SvgPicEditor> {
     }
 
     if (modifiedSvgString != null) {
+      if (widget.listenEdit != null) widget.listenEdit!(modifiedSvgString!);
       return SvgPicture.string(
         modifiedSvgString!,
         width: widget.width,
@@ -194,11 +244,13 @@ class SvgPicEditorState extends State<SvgPicEditor> {
     return Shimmer.fromColors(
       baseColor: Colors.grey[300]!,
       highlightColor: Colors.grey[100]!,
-      child: SvgPicture.asset(
-        'assets/placeholder.svg',
+      child: Container(
         width: widget.width,
         height: widget.height,
-        fit: widget.fit,
+        decoration: BoxDecoration(
+          color: Colors.grey[300],
+          borderRadius: BorderRadius.circular(20),
+        ),
       ),
     );
   }

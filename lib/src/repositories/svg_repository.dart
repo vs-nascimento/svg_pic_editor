@@ -14,7 +14,7 @@ abstract class SvgRepository {
     int? childIndex,
   });
 
-  void applyModifications(xml.XmlElement element, ElementSvg entity);
+  void applyModifications(xml.XmlElement element, ElementEdit entity);
 
   List<SvgElement> extractComponentPartsAsSvg({
     required xml.XmlDocument document,

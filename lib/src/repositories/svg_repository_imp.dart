@@ -1,10 +1,9 @@
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'package:xml/xml.dart' as xml;
 
-import '../models/element.dart';
-import '../models/svg_element.dart';
-import '../repositories/svg_repository.dart';
+import '../../svg_pic_editor.dart';
 
 class SvgRepositoryImpl implements SvgRepository {
   @override
@@ -45,10 +44,10 @@ class SvgRepositoryImpl implements SvgRepository {
   }
 
   @override
-  void applyModifications(xml.XmlElement element, ElementSvg entity) {
+  void applyModifications(xml.XmlElement element, ElementEdit entity) {
     bool applyModification = false;
 
-    // Verifica se o elemento corresponde ao alvo especificado
+    // Checks if the element matches the specified target
     if (entity.id != null && element.getAttribute('id') == entity.id) {
       applyModification = true;
     }
@@ -61,9 +60,9 @@ class SvgRepositoryImpl implements SvgRepository {
       }
     }
 
-    // Aplica as modificações somente se o elemento corresponder ao alvo
+    // Applies modifications only if the element matches the target
     if (applyModification) {
-      // Recupera ou cria o atributo style do elemento
+      // Retrieves or creates the element's style attribute
       String style = element.getAttribute('style') ?? '';
 
       if (entity.fillColor != null) {
@@ -93,34 +92,27 @@ class SvgRepositoryImpl implements SvgRepository {
         element.setAttribute('transform', entity.transform!);
       }
 
-      // Atualiza o atributo 'style' se houver modificações
+      // Update the 'style' attribute if there are changes
       if (style.isNotEmpty) {
         element.setAttribute('style', style);
       }
     }
   }
 
-// //Função auxiliar para obter o valor de uma propriedade no estilo
-//   String? _getStyleValue(String style, String property) {
-//     final regex = RegExp(r'${property}\s*:\s*([^;]+)');
-//     final match = regex.firstMatch(style);
-//     return match?.group(1);
-//   }
-
-// Função auxiliar para atualizar ou adicionar um valor no estilo
+// Helper function to update or add a value to the style
   String _updateStyleValue(String style, String property, String value) {
-    // Cria a expressão regular corretamente com interpolação de strings
+    // Create regular expression correctly with string interpolation
     final regex = RegExp('$property\\s*:\\s*[^;]+');
 
     if (regex.hasMatch(style)) {
-      // Substitui a propriedade no estilo existente
+      // Replaces the property in the existing style
       return style.replaceAll(regex, '$property:$value');
     } else {
-      // Verifica se precisa adicionar ponto-e-vírgula no fim do estilo
+      // Check if you need to add a semicolon at the end of the style
       if (style.isNotEmpty && !style.endsWith(';')) {
         style += ';';
       }
-      // Adiciona a nova propriedade ao estilo
+      // Add the new property to the style
       return '$style$property:$value;';
     }
   }
@@ -137,64 +129,89 @@ class SvgRepositoryImpl implements SvgRepository {
     }
   }
 
-  // Função para query avançada
+  // Function for advanced query
 
   Iterable<xml.XmlElement> queryAdvanced({
     required xml.XmlDocument document,
     required String querySelector,
   }) {
-    // Divide a consulta por "[" para separar o nome do elemento e os atributos
-    final splitQuery = querySelector.split('[');
-    final elementName = splitQuery[0];
-    int? index;
+    // Divide the query by commas to handle multiple selectors
+    final queries = querySelector.split(',').map((query) => query.trim());
 
-    // Verifica se o índice está no último componente entre colchetes
-    final lastPart = splitQuery.last;
-    if (RegExp(r'^\d+\]$').hasMatch(lastPart)) {
-      index = int.tryParse(lastPart.replaceAll(']', ''));
-      splitQuery.removeLast(); // Remove o índice da lista de atributos
-    }
+// List to accumulate all found elements
+    final results = <xml.XmlElement>[];
 
-    final attributes =
-        splitQuery.sublist(1).map((attr) => attr.replaceAll(']', '')).toList();
+    for (final query in queries) {
+      final isFullElement = query.startsWith('<') && query.endsWith('>');
 
-    // Filtra os elementos pelo nome
-    var elements = document.findAllElements(elementName);
-
-    // Filtra os elementos pelos atributos
-    if (attributes.isNotEmpty) {
-      for (final attribute in attributes) {
-        final splitAttribute = attribute.split('=');
-        final attributeName = splitAttribute[0];
-        final attributeValue = splitAttribute[1]
-            .substring(1, splitAttribute[1].length - 1); // Remove as aspas
-
-        elements = elements.where((element) {
-          final elementAttrValue = element.getAttribute(attributeName);
-          return elementAttrValue != null && elementAttrValue == attributeValue;
+      if (isFullElement) {
+        // Search for the complete element within the document
+        final rawElement = xml.XmlDocument.parse(query).rootElement;
+        final matchedElements =
+            document.findAllElements(rawElement.name.local).where((element) {
+          return element.toString() == rawElement.toString();
         });
+        results.addAll(matchedElements);
+      } else {
+        // Divide the query by "[" to separate the element name and attributes
+        final splitQuery = query.split('[');
+        final elementName = splitQuery[0];
+        int? index;
+
+        // Checks if the index is in the last component between square brackets
+        final lastPart = splitQuery.last;
+        if (RegExp(r'^\d+\]$').hasMatch(lastPart)) {
+          index = int.tryParse(lastPart.replaceAll(']', ''));
+          splitQuery.removeLast(); // Remove o índice da lista de atributos
+        }
+
+        final attributes = splitQuery
+            .sublist(1)
+            .map((attr) => attr.replaceAll(']', ''))
+            .toList();
+
+        // Filter elements by name
+        var elements = document.findAllElements(elementName);
+
+        // Filter elements by attributes
+        if (attributes.isNotEmpty) {
+          for (final attribute in attributes) {
+            final splitAttribute = attribute.split('=');
+            final attributeName = splitAttribute[0];
+            final attributeValue =
+                splitAttribute[1].substring(1, splitAttribute[1].length - 1);
+
+            elements = elements.where((element) {
+              final elementAttrValue = element.getAttribute(attributeName);
+              return elementAttrValue != null &&
+                  elementAttrValue == attributeValue;
+            });
+          }
+        } else {
+          final String? id =
+              elementName.startsWith('#') ? elementName.substring(1) : null;
+          final String? className =
+              elementName.startsWith('.') ? elementName.substring(1) : null;
+          final int? childIndex = int.tryParse(elementName);
+
+          elements = queryElements(
+            document: document,
+            id: id,
+            className: className,
+            childIndex: childIndex,
+          );
+        }
+
+        // Adds the element at the specified index, or all if index is null
+        if (index != null && index < elements.length) {
+          results.add(elements.elementAt(index));
+        } else {
+          results.addAll(elements);
+        }
       }
-    } else {
-      final elementName = splitQuery[0];
-      final String? id =
-          elementName.startsWith('#') ? elementName.substring(1) : null;
-      final String? className =
-          elementName.startsWith('.') ? elementName.substring(1) : null;
-      final int? childIndex = int.tryParse(elementName);
-
-      elements = queryElements(
-        document: document,
-        id: id,
-        className: className,
-        childIndex: childIndex,
-      );
     }
 
-    // Retorna apenas o elemento no índice especificado, ou todos se índice for nulo
-    if (index != null && index < elements.length) {
-      return [elements.elementAt(index)];
-    }
-    return elements;
+    return results;
   }
 
   @override
@@ -205,7 +222,7 @@ class SvgRepositoryImpl implements SvgRepository {
     List<SvgElement> svgElements = [];
     Set<String> extractedParts = <String>{};
 
-    // Se partNames for nulo ou vazio, consideramos todas as partes
+// If partNames is null or empty, we consider all parts
     final elements = partNames == null || partNames.isEmpty
         ? document.descendants.whereType<xml.XmlElement>()
         : document.descendants
@@ -216,7 +233,7 @@ class SvgRepositoryImpl implements SvgRepository {
       if (element.name.local != 'svg') {
         var svgElementString = element.toXmlString(pretty: true);
 
-        // Remover transformações existentes (como translate)
+        // Remove existing transformations (like translate)
         if (element.getAttribute('transform') != null) {
           final updatedElement = element.copy();
           updatedElement.removeAttribute('transform');
@@ -226,10 +243,10 @@ class SvgRepositoryImpl implements SvgRepository {
         if (!extractedParts.contains(svgElementString)) {
           extractedParts.add(svgElementString);
 
-          // Cria o objeto SvgElement
+          // Create the SvgElement object
           final svgElement = _createSvgElementFromXml(element);
 
-          // Adiciona o SvgElement à lista
+          // Add SvgElement to the list
           svgElements.add(svgElement);
         }
       }
@@ -239,12 +256,12 @@ class SvgRepositoryImpl implements SvgRepository {
   }
 
   Future<xml.XmlDocument> injectCss(xml.XmlDocument document, String css) {
-    // Encontra o elemento <defs> no documento SVG, se existir
+// Find the <defs> element in the SVG document, if it exists
     final defsElements = document.findAllElements('defs');
     final styleElements = document.findAllElements('style');
     final defsElement = defsElements.isNotEmpty ? defsElements.first : null;
 
-    // Cria um elemento <style> com o CSS fornecido
+    // Create a <style> element with the given CSS
     final styleElement = xml.XmlElement(
       xml.XmlName('style'),
       [xml.XmlAttribute(xml.XmlName('type'), 'text/css')],
@@ -253,16 +270,16 @@ class SvgRepositoryImpl implements SvgRepository {
 
     if (defsElement != null) {
       if (styleElements.isNotEmpty) {
-        // Atualiza o conteúdo do primeiro elemento <style>
+        // Update the content of the first <style> element
         final existingStyleElement = styleElements.first;
         existingStyleElement.children.clear();
         existingStyleElement.children.add(xml.XmlText(css));
       } else {
-        // Adiciona o novo elemento <style> ao elemento <defs>
+        // Add the new <style> element to the <defs> element
         defsElement.children.add(styleElement);
       }
     } else {
-      // Se não existir, adiciona o elemento <defs> ao documento
+      // If it doesn't exist, add the <defs> element to the document
       final newDefsElement = xml.XmlElement(
         xml.XmlName('defs'),
         [],
@@ -271,18 +288,18 @@ class SvgRepositoryImpl implements SvgRepository {
       document.children.insert(0, newDefsElement);
     }
 
-    // Retorna o documento modificado
+    // Returns the modified document
     return Future.value(document);
   }
 
   SvgElement _createSvgElementFromXml(xml.XmlElement element) {
-    // Cria um mapa de atributos a partir dos atributos do XmlElement
+// Create an attribute map from the XmlElement attributes
     final attributes = <String, String>{};
     for (var attr in element.attributes) {
       attributes[attr.name.local] = attr.value;
     }
 
-    // Cria uma lista de filhos recursivamente
+    // Create a list of children recursively
     final children = element.children
         .whereType<xml.XmlElement>()
         .map((child) => _createSvgElementFromXml(child))
@@ -293,13 +310,14 @@ class SvgRepositoryImpl implements SvgRepository {
 
     const footer = '</svg>';
 
-    // Retorna o SvgElement com os dados do elemento XML
+    // Returns SvgElement with the XML element data
     return SvgElement(
         name: element.name.local,
         attributes: attributes,
         children: children,
-        elementSvgString: element.toXmlString(pretty: true),
-        svgString: """
+        elementString: element.toXmlString(pretty: true),
+        elementSvg: ElementEdit.fromElementSvgString(element.toXmlString()),
+        svgMountedString: """
       $header
       ${element.toXmlString(pretty: true)}
       $footer
@@ -332,5 +350,76 @@ class SvgRepositoryImpl implements SvgRepository {
     } else {
       throw Exception('Failed to load SVG from network');
     }
+  }
+
+  Future<List<SvgColorElement>> extractColorsAndElements(
+      String svgContent) async {
+    // Parse the SVG document
+    final document = xml.XmlDocument.parse(svgContent);
+
+    // Regex to search for color in fill or stroke
+    final colorPattern = RegExp(r'(?:fill|stroke)="([^"]+)"');
+    final elements = document.descendants.whereType<xml.XmlElement>();
+
+    // Color mapping for SVG element list
+    final colorElementsMap = <Color, List<SvgElement>>{};
+
+    for (final element in elements) {
+      final elementString = element.toXmlString(pretty: true);
+
+      // Search for color in the current element
+      final colorMatch = colorPattern.firstMatch(elementString);
+      if (colorMatch != null) {
+        final colorString = colorMatch.group(1)!;
+        final color = _parseColor(colorString);
+
+// If the color is valid, add the element to the map
+        if (color != null) {
+          final svgElement = _createSvgElementFromXml(element);
+
+          // Adds the element to the color map; prevents key duplication
+          colorElementsMap.putIfAbsent(color, () => []).add(svgElement);
+        }
+      }
+    }
+
+    // Remove any additional duplication and convert the map to a list
+    final uniqueColorElements = <SvgColorElement>[];
+    final seenColors = <Color>{};
+
+    for (var entry in colorElementsMap.entries) {
+      if (seenColors.add(entry.key)) {
+        uniqueColorElements
+            .add(SvgColorElement(color: entry.key, parts: entry.value));
+      }
+    }
+
+    return uniqueColorElements;
+  }
+
+// Helper function to convert color string to Color object
+  Color? _parseColor(String colorString) {
+    try {
+      if (colorString.startsWith('#')) {
+        final hexColor = colorString.replaceFirst('#', '');
+        final color = int.parse(hexColor, radix: 16);
+        return Color(color | 0xFF000000); // If hexadecimal, sets full opacity
+      } else if (colorString.startsWith('rgba')) {
+// Parse of rgba (ex: rgba(255, 0, 0, 1))
+        final rgbaValues = RegExp(r'rgba\((\d+), (\d+), (\d+), (\d+.\d+)\)')
+            .firstMatch(colorString);
+        if (rgbaValues != null) {
+          final r = int.parse(rgbaValues.group(1)!);
+          final g = int.parse(rgbaValues.group(2)!);
+          final b = int.parse(rgbaValues.group(3)!);
+          final a = double.parse(rgbaValues.group(4)!) * 255;
+
+          return Color.fromARGB(a.toInt(), r, g, b);
+        }
+      }
+    } catch (e) {
+      debugPrint('Erro ao converter cor: $e');
+    }
+    return null;
   }
 }

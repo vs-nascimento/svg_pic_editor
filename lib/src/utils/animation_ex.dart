@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../ui/svg_pic_editor.dart';
+import '../../svg_pic_editor.dart';
 
 extension AnimatedSvgPicEditor on SvgPicEditor {
   /// Anima o widget com o efeito de shake.
