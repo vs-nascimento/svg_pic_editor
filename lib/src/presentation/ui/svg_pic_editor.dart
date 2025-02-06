@@ -5,6 +5,8 @@ import '../../../svg_pic_editor.dart';
 import '../../usecases/load_network_svg_use_case.dart';
 import '../../usecases/load_svg_use_case.dart';
 
+/// Widget que exibe um SVG com possibilidade de modificação e,
+/// por padrão, com efeito de toque (splash) no formato do próprio SVG.
 class SvgPicEditor extends StatefulWidget {
   final String? assetName;
   final String? svgString;
@@ -19,6 +21,11 @@ class SvgPicEditor extends StatefulWidget {
   final Function(String)? listenEdit;
   final Function(List<SvgElement>)? getParts;
   final Function(List<SvgColorElement>)? getColors;
+  final Function? onTap;
+
+  /// Permite que o usuário informe um ShapeBorder customizado para o splash.
+  /// Se não for informado, usaremos o formato extraído do SVG (quando possível).
+  final ShapeBorder? splashShape;
 
   const SvgPicEditor._({
     Key? key,
@@ -35,6 +42,8 @@ class SvgPicEditor extends StatefulWidget {
     this.listenEdit,
     this.getParts,
     this.getColors,
+    this.onTap,
+    this.splashShape,
   }) : super(key: key);
 
   static SvgPicEditor asset(
@@ -49,6 +58,8 @@ class SvgPicEditor extends StatefulWidget {
     Function(String)? listenEdit,
     Function(List<SvgElement>)? getParts,
     Function(List<SvgColorElement>)? getColors,
+    Function? onTap,
+    ShapeBorder? splashShape,
   }) {
     return SvgPicEditor._(
       assetName: assetName,
@@ -62,6 +73,8 @@ class SvgPicEditor extends StatefulWidget {
       listenEdit: listenEdit,
       getParts: getParts,
       getColors: getColors,
+      onTap: onTap,
+      splashShape: splashShape,
     );
   }
 
@@ -76,6 +89,8 @@ class SvgPicEditor extends StatefulWidget {
     Function(String)? listenEdit,
     Function(List<SvgElement>)? getParts,
     Function(List<SvgColorElement>)? getColors,
+    Function? onTap,
+    ShapeBorder? splashShape,
   }) {
     return SvgPicEditor._(
       svgUrl: svgUrl,
@@ -88,6 +103,8 @@ class SvgPicEditor extends StatefulWidget {
       listenEdit: listenEdit,
       getParts: getParts,
       getColors: getColors,
+      onTap: onTap,
+      splashShape: splashShape,
     );
   }
 
@@ -102,6 +119,8 @@ class SvgPicEditor extends StatefulWidget {
     Function(String)? listenEdit,
     Function(List<SvgElement>)? getParts,
     Function(List<SvgColorElement>)? getColors,
+    Function(String? svgModifiedString)? onTap,
+    ShapeBorder? splashShape,
   }) {
     return SvgPicEditor._(
       svgString: svgString,
@@ -114,6 +133,8 @@ class SvgPicEditor extends StatefulWidget {
       listenEdit: listenEdit,
       getParts: getParts,
       getColors: getColors,
+      onTap: onTap,
+      splashShape: splashShape,
     );
   }
 
@@ -123,31 +144,13 @@ class SvgPicEditor extends StatefulWidget {
 
 class SvgPicEditorState extends State<SvgPicEditor> {
   String? modifiedSvgString;
-  bool hasError = false; // Variável para controle de erro
+  bool hasError = false;
 
   @override
   void initState() {
     super.initState();
     _modifySvg();
-    if (widget.getParts != null) {
-      final svgMapperParts = SvgMapperParts();
-      if (widget.assetName != null) {
-        svgMapperParts.loadAsset(
-          assetPath: widget.assetName!,
-          partNames: [],
-        ).then((value) => widget.getParts!(value));
-      } else if (widget.svgString != null) {
-        svgMapperParts.loadString(
-          svgContent: widget.svgString!,
-          partNames: [],
-        ).then((value) => widget.getParts!(value));
-      } else if (widget.svgUrl != null) {
-        svgMapperParts.loadNetwork(
-          url: widget.svgUrl!,
-          partNames: [],
-        ).then((value) => widget.getParts!(value));
-      }
-    }
+    _loadSvgParts();
   }
 
   @override
@@ -158,23 +161,38 @@ class SvgPicEditorState extends State<SvgPicEditor> {
     }
   }
 
+  Future<void> _loadSvgParts() async {
+    if (widget.getParts == null) return;
+
+    final svgMapperParts = SvgMapperParts();
+    try {
+      List<SvgElement> parts = [];
+      if (widget.assetName != null) {
+        parts = await svgMapperParts.loadAsset(
+          assetPath: widget.assetName!,
+          partNames: [],
+        );
+      } else if (widget.svgString != null) {
+        parts = await svgMapperParts.loadString(
+          svgContent: widget.svgString!,
+          partNames: [],
+        );
+      } else if (widget.svgUrl != null) {
+        parts = await svgMapperParts.loadNetwork(
+          url: widget.svgUrl!,
+          partNames: [],
+        );
+      }
+      widget.getParts!(parts);
+    } catch (e) {
+      debugPrint('Erro ao carregar partes do SVG: $e');
+    }
+  }
+
   Future<void> _modifySvg() async {
     try {
       final modifySvg = ModifySvgUseCase(SvgRepositoryImpl());
-      final loadAsset = LoadSvgUseCase();
-      final loadNetworkSvg = LoadNetworkSvgUseCase();
-      String svgContent = '';
-
-      // Carrega o SVG com base na fonte (asset, string ou URL)
-      if (widget.assetName != null) {
-        svgContent = await loadAsset(widget.assetName!, widget.package);
-      } else if (widget.svgString != null) {
-        svgContent = widget.svgString!;
-      } else if (widget.svgUrl != null) {
-        svgContent = await loadNetworkSvg(widget.svgUrl!);
-      } else {
-        throw Exception('Nenhuma fonte SVG válida fornecida');
-      }
+      String svgContent = await _loadSvgContent();
 
       svgContent = _cleanSvg(svgContent);
 
@@ -183,7 +201,6 @@ class SvgPicEditorState extends State<SvgPicEditor> {
         widget.getColors!(colors);
       }
 
-      // Aplica as modificações no SVG
       final modifiedSvg = await modifySvg(
         svgContent: svgContent,
         elements: widget.modifications ?? [],
@@ -191,7 +208,7 @@ class SvgPicEditorState extends State<SvgPicEditor> {
 
       setState(() {
         modifiedSvgString = modifiedSvg;
-        hasError = false; // Reinicia a variável de erro
+        hasError = false;
       });
     } catch (e) {
       debugPrint('Erro ao modificar SVG: $e');
@@ -203,20 +220,40 @@ class SvgPicEditorState extends State<SvgPicEditor> {
     }
   }
 
-  // Limpa conteúdo de estilo e script do SVG para evitar problemas de compatibilidade
+  Future<String> _loadSvgContent() async {
+    final loadAsset = LoadSvgUseCase();
+    final loadNetworkSvg = LoadNetworkSvgUseCase();
+
+    if (widget.assetName != null) {
+      return await loadAsset(widget.assetName!, widget.package);
+    } else if (widget.svgString != null) {
+      return widget.svgString!;
+    } else if (widget.svgUrl != null) {
+      return await loadNetworkSvg(widget.svgUrl!);
+    } else {
+      throw Exception('Nenhuma fonte SVG válida fornecida');
+    }
+  }
+
   String _cleanSvg(String svgContent) {
     try {
       final stylePattern = RegExp(r'<style[\s\S]*?</style>', multiLine: true);
-      svgContent = svgContent.replaceAll(stylePattern, '');
-
       final scriptPattern =
           RegExp(r'<script[\s\S]*?</script>', multiLine: true);
-      svgContent = svgContent.replaceAll(scriptPattern, '');
-
-      return svgContent;
+      return svgContent
+          .replaceAll(stylePattern, '')
+          .replaceAll(scriptPattern, '');
     } catch (e) {
       debugPrint('Erro ao limpar SVG: $e');
       return svgContent;
+    }
+  }
+
+  void _handleTap() {
+    if (widget.onTap is void Function()) {
+      (widget.onTap as void Function())();
+    } else if (widget.onTap is void Function(String?)) {
+      (widget.onTap as void Function(String?))(modifiedSvgString);
     }
   }
 
@@ -230,14 +267,17 @@ class SvgPicEditorState extends State<SvgPicEditor> {
 
     if (modifiedSvgString != null) {
       if (widget.listenEdit != null) widget.listenEdit!(modifiedSvgString!);
-      return SvgPicture.string(
-        modifiedSvgString!,
-        width: widget.width,
-        height: widget.height,
-        fit: widget.fit,
-        colorFilter: widget.color != null
-            ? ColorFilter.mode(widget.color!, BlendMode.srcIn)
-            : null,
+      return GestureDetector(
+        onTap: widget.onTap == null ? null : _handleTap,
+        child: SvgPicture.string(
+          modifiedSvgString!,
+          width: widget.width,
+          height: widget.height,
+          fit: widget.fit,
+          colorFilter: widget.color != null
+              ? ColorFilter.mode(widget.color!, BlendMode.srcIn)
+              : null,
+        ),
       );
     }
 

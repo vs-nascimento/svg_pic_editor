@@ -1,6 +1,6 @@
 name: svg_pic_editor
 description: A Flutter package for SVG editing and manipulation across multiple platforms.
-version: 3.1.0
+version: 3.2.0
 homepage: https://github.com/vs-nascimento/svg_pic_editor
 
 environment:

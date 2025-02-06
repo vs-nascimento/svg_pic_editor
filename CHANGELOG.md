@@ -1,5 +1,23 @@
 ## Changelog
 
+## [3.2.0]
+### Improvements
+- Refined the `onTap` functionality, now supporting both void and modified SVG string returns for better flexibility.
+- Enhanced error handling in the `SvgPicEditor` widget, ensuring smoother user experience when errors occur.
+- Updated the `modifiedSvgString` update logic to improve the reactivity and ensure faster rendering.
+
+### New Features
+- Introduced the `onTap` callback function, allowing users to trigger actions when the SVG is tapped, either with the modified SVG string or without any return value.
+- Added shimmer effect loading for a smoother experience when the SVG is being processed.
+
+### Fixes
+- Corrected a potential issue with the SVG string processing, improving the integrity of the final modified output.
+- Minor optimizations in the way SVG parts are loaded for performance improvements.
+
+### Notes
+- This update focuses on improving the interactivity and error resilience of the `SvgPicEditor`, alongside optimizing the performance during SVG manipulation and loading.
+- Users are encouraged to explore the new `onTap` functionality to enhance user interactivity with SVG elements.
+
 ## [3.0.0]
 ### Improvements
 - Enhanced the search system with improved query handling for better performance and flexibility.

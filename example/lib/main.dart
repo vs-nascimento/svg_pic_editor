@@ -103,6 +103,7 @@ class MyAppState extends State<MyApp> with TickerProviderStateMixin {
                         width: 200,
                         height: 200,
                         fit: BoxFit.cover,
+                        onTap: () {},
                         modifications: [
                           ElementEdit(
                             querySelector: "#bulbo",
