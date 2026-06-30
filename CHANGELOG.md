@@ -1,5 +1,15 @@
 ## Changelog
 
+## [4.0.0]
+### New Features
+- Added support for `borderRadius` on `<rect>` elements in `ElementEdit` and `SvgEditorCore`.
+
+### Improvements
+- Upgraded the package to use the new Flutter Color API (`r`, `g`, `b`, `a` and `toARGB32()`), resolving all static analysis deprecation warnings.
+- Upgraded environment constraints to Flutter `>=3.22.0` and Dart `>=3.4.0` to support modern APIs.
+- Created a robust `.pubignore` file to exclude build caches, local configuration files, and the `docs` web helper from the published package, reducing the package size significantly.
+- Cleaned up unused local variables and resolved minor warnings.
+
 ## [3.2.0]
 ### Improvements
 - Refined the `onTap` functionality, now supporting both void and modified SVG string returns for better flexibility.

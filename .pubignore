@@ -1,0 +1,23 @@
+# Ignore the docs directory since it's for GitHub Pages
+docs/
+
+# Ignore local IDE and agent settings
+.idea/
+.vscode/
+.agents/
+.gemini/
+
+# Ignore local configuration and build files
+build/
+*.spec
+*.local
+local.properties
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# Ignore root-level platform folders if any (they belong in example/)
+android/
+ios/
+linux/
+macos/
+windows/

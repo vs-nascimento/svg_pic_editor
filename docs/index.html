@@ -1,0 +1,2084 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SVG Pic Editor - Interactive Helper</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-gradient: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+      --panel-bg: rgba(30, 41, 59, 0.7);
+      --border-color: rgba(255, 255, 255, 0.08);
+      --accent-primary: #38bdf8;
+      --accent-secondary: #818cf8;
+      --accent-gradient: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --success-color: #34d399;
+      --highlight-color: rgba(56, 189, 248, 0.2);
+      --selected-color: rgba(129, 140, 248, 0.4);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-gradient);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      overflow-y: scroll;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.5);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    header {
+      padding: 24px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
+      backdrop-filter: blur(8px);
+      background: rgba(15, 23, 42, 0.4);
+    }
+
+    .logo-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .logo-icon {
+      width: 32px;
+      height: 32px;
+      background: var(--accent-gradient);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      color: #0f172a;
+      box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+    }
+
+    h1 {
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: -0.5px;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .github-link {
+      color: var(--text-muted);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      transition: color 0.2s;
+    }
+
+    .github-link:hover {
+      color: var(--text-main);
+    }
+
+    main {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 420px;
+      gap: 24px;
+      padding: 24px 40px;
+      max-width: 1600px;
+      margin: 0 auto;
+      width: 100%;
+      align-items: start;
+    }
+
+    @media (max-width: 1024px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background: var(--panel-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      backdrop-filter: blur(12px);
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    }
+
+    .workspace-area {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .input-section {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .drop-zone {
+      border: 2px dashed rgba(255, 255, 255, 0.15);
+      border-radius: 12px;
+      padding: 30px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      background: rgba(15, 23, 42, 0.2);
+    }
+
+    .drop-zone:hover, .drop-zone.dragover {
+      border-color: var(--accent-primary);
+      background: rgba(56, 189, 248, 0.05);
+      box-shadow: 0 0 15px rgba(56, 189, 248, 0.1) inset;
+    }
+
+    .drop-zone p {
+      font-size: 14px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .drop-zone span {
+      color: var(--accent-primary);
+      font-weight: 500;
+    }
+
+    .hidden-input {
+      display: none;
+    }
+
+    .textarea-container {
+      position: relative;
+    }
+
+    textarea {
+      width: 100%;
+      height: 120px;
+      background: rgba(15, 23, 42, 0.4);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 12px;
+      color: var(--text-main);
+      font-family: 'Fira Code', monospace;
+      font-size: 12px;
+      resize: none;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    textarea:focus {
+      border-color: var(--accent-primary);
+    }
+
+    .preview-container {
+      flex: 1;
+      min-height: 400px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle, rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 20px 20px;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      position: relative;
+      overflow: auto;
+      padding: 20px;
+    }
+
+    /* Interactive SVG Items styling */
+    .preview-container svg {
+      max-width: 100%;
+      max-height: 500px;
+      height: auto;
+      transition: transform 0.3s;
+    }
+
+    /* Dynamic SVG classes injected via JS */
+    .svg-interactive-item {
+      cursor: pointer;
+      transition: stroke 0.2s, stroke-width 0.2s, filter 0.2s;
+    }
+
+    .svg-interactive-item:hover {
+      filter: drop-shadow(0 0 6px var(--accent-primary)) brightness(1.2);
+    }
+
+    .svg-interactive-item.selected-element {
+      cursor: move;
+      filter: drop-shadow(0 0 8px var(--accent-secondary)) brightness(1.3);
+    }
+
+    .svg-interactive-item.removed-preview-state {
+      opacity: 0.15 !important;
+      filter: grayscale(1) sepia(1) hue-rotate(-50deg) saturate(5) !important;
+      stroke: #f43f5e !important;
+      stroke-width: 1.5px !important;
+      stroke-dasharray: 4 !important;
+    }
+
+    /* Inspector Panel */
+    .panel-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-main);
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .info-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .info-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .info-value {
+      background: rgba(15, 23, 42, 0.4);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-family: 'Fira Code', monospace;
+      font-size: 13px;
+      word-break: break-all;
+    }
+
+    .selectors-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .selector-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 10px 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .selector-option:hover {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 255, 255, 0.15);
+    }
+
+    .selector-option.active {
+      background: rgba(56, 189, 248, 0.08);
+      border-color: var(--accent-primary);
+    }
+
+    .selector-option input[type="radio"] {
+      accent-color: var(--accent-primary);
+    }
+
+    .selector-text {
+      font-family: 'Fira Code', monospace;
+      font-size: 12px;
+      flex: 1;
+    }
+
+    /* Properties Editor */
+    .properties-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    .property-control {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .property-control.full-width {
+      grid-column: span 2;
+    }
+
+    .color-picker-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(15, 23, 42, 0.4);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 4px 8px;
+    }
+
+    input[type="color"] {
+      border: none;
+      background: none;
+      width: 28px;
+      height: 28px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    input[type="text"], input[type="number"] {
+      background: rgba(15, 23, 42, 0.4);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 8px 12px;
+      color: var(--text-main);
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      outline: none;
+      width: 100%;
+    }
+
+    input[type="text"]:focus, input[type="number"]:focus {
+      border-color: var(--accent-primary);
+    }
+
+    input[type="range"] {
+      accent-color: var(--accent-primary);
+      width: 100%;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+      outline: none;
+    }
+
+    .range-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+    }
+
+    /* Code Output */
+    .code-box-container {
+      position: relative;
+      background: #090d16;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    pre {
+      padding: 16px;
+      overflow-x: auto;
+      margin: 0;
+    }
+
+    code {
+      font-family: 'Fira Code', monospace;
+      font-size: 12px;
+      color: #38bdf8;
+      line-height: 1.5;
+    }
+
+    .copy-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      color: var(--text-main);
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .copy-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .copy-btn.copied {
+      background: rgba(52, 211, 153, 0.2);
+      border-color: var(--success-color);
+      color: var(--success-color);
+    }
+
+    /* Empty States */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      color: var(--text-muted);
+      text-align: center;
+      gap: 12px;
+      height: 100%;
+    }
+
+    .empty-state svg {
+      width: 48px;
+      height: 48px;
+      stroke: var(--text-muted);
+      stroke-width: 1.5px;
+      fill: none;
+    }
+
+    .checkbox-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .checkbox-container input {
+      accent-color: var(--accent-primary);
+      width: 16px;
+      height: 16px;
+    }
+
+    /* Premium Input Styling */
+    .premium-input {
+      width: 100%;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      color: var(--text-main);
+      padding: 8px 12px;
+      font-size: 13px;
+      outline: none;
+      transition: all 0.2s;
+      box-sizing: border-box;
+    }
+
+    .premium-input:focus {
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.15);
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #0f172a;
+      border: 1px solid var(--success-color);
+      color: var(--success-color);
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-weight: 500;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      transform: translateY(100px);
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      z-index: 1000;
+    }
+
+    .toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    /* Tabs Styling */
+    .tabs-container {
+      display: flex;
+      gap: 8px;
+      border-bottom: 1px solid var(--border-color);
+      margin-top: 10px;
+      padding-bottom: 8px;
+    }
+
+    .tab-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 6px 12px;
+      cursor: pointer;
+      border-radius: 6px;
+      transition: all 0.2s;
+      outline: none;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .tab-btn.active {
+      color: var(--accent-primary);
+      background: rgba(56, 189, 248, 0.08);
+    }
+
+    .tab-content {
+      display: none;
+    }
+
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Recorder Bar Styling */
+    .recorder-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: rgba(15, 23, 42, 0.4);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 8px 16px;
+      margin-bottom: 12px;
+      opacity: 0.6;
+      transition: opacity 0.3s;
+      height: 40px;
+      box-sizing: border-box;
+    }
+
+    .recorder-bar.active-svg {
+      opacity: 1;
+    }
+
+    .recorder-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .recorder-status.recording {
+      color: #ef4444;
+    }
+
+    .record-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      transition: background 0.3s;
+    }
+
+    .record-dot.recording {
+      background: #ef4444;
+      animation: flash 1s infinite alternate;
+    }
+
+    @keyframes flash {
+      from { opacity: 0.3; }
+      to { opacity: 1; }
+    }
+
+    .record-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--accent-primary);
+      color: #0f172a;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .record-btn:hover {
+      filter: brightness(1.1);
+    }
+
+    .record-btn.recording {
+      background: #ef4444;
+      color: white;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo-container">
+      <div class="logo-icon">S</div>
+      <h1>SVG Pic Editor Helper</h1>
+    </div>
+    <a href="https://github.com/vs-nascimento/svg_pic_editor" target="_blank" class="github-link">
+      <svg height="20" width="20" viewBox="0 0 16 16" fill="currentColor">
+        <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
+      </svg>
+      GitHub Repository
+    </a>
+  </header>
+
+  <main>
+    <div class="workspace-area">
+      <div class="card">
+        <div class="input-section">
+          <div class="drop-zone" id="dropZone">
+            <p>Drag & drop your <strong>SVG file</strong> here, or <span>browse files</span></p>
+            <input type="file" id="fileInput" class="hidden-input" accept=".svg">
+          </div>
+          <div class="textarea-container">
+            <textarea id="svgCodeInput" placeholder="... or paste your raw SVG XML code here. The preview will update automatically."></textarea>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="flex: 1;">
+        <div class="panel-title">Interactive Preview</div>
+        
+        <div class="recorder-bar" id="recorderBar">
+          <div class="recorder-status" id="recorderStatus">
+            <div class="record-dot" id="recordDot"></div>
+            <span id="recorderText">Ready to Record</span>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button class="record-btn" id="recordBtn" disabled>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                <circle cx="12" cy="12" r="10"></circle>
+              </svg>
+              Record Action
+            </button>
+            <button class="record-btn" id="optimizeBtn" style="background: var(--accent-secondary); color: #0f172a;" disabled>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 13.5l10.5-11.25L12 10.5h8.25L9.75 21.75 12 13.5H3.75z" />
+              </svg>
+              Optimize for Flutter
+            </button>
+          </div>
+        </div>
+
+        <div class="preview-container" id="previewContainer">
+          <div class="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375 0 11-.75 0 .375 0 01.75 0z" />
+            </svg>
+            <p>Import an SVG to start inspecting and editing elements.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="inspectorCard">
+      <div class="panel-title">Element Inspector</div>
+      
+      <!-- Empty Inspector State -->
+      <div id="inspectorEmptyState" class="empty-state" style="padding: 20px 0;">
+        <p>Click on any element in the SVG preview to inspect it and generate Flutter code.</p>
+      </div>
+
+      <!-- Active Inspector Content -->
+      <div id="inspectorContent" style="display: none; flex-direction: column; gap: 16px;">
+        <div style="display: grid; grid-template-columns: 80px 1fr 1fr; gap: 12px; align-items: end;">
+          <div class="info-group">
+            <div class="info-label">Tag</div>
+            <div class="info-value" id="tagNameVal" style="padding: 8px 0; font-weight: 700; color: var(--accent-secondary);">path</div>
+          </div>
+          <div class="info-group">
+            <div class="info-label">Element ID</div>
+            <input type="text" id="elementIdInput" class="premium-input" placeholder="e.g. car-wheel">
+          </div>
+          <div class="info-group">
+            <div class="info-label">Class</div>
+            <input type="text" id="elementClassInput" class="premium-input" placeholder="e.g. rotating-part">
+          </div>
+        </div>
+
+        <div class="info-group">
+          <div class="info-label font-medium">Select Query Selector</div>
+          <div class="selectors-list" id="selectorsList">
+            <!-- Populated via JS -->
+          </div>
+        </div>
+
+        <div class="panel-title" style="margin-top: 10px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">Properties Editor</div>
+
+        <div class="properties-grid">
+          <div class="property-control">
+            <label class="checkbox-container">
+              <input type="checkbox" id="useFill" checked>
+              <span class="info-label">Fill Color</span>
+            </label>
+            <div class="color-picker-wrapper">
+              <input type="color" id="fillColorPicker" value="#38bdf8">
+              <input type="text" id="fillHexText" value="#38BDF8" style="padding: 4px 6px; font-size: 12px;">
+            </div>
+          </div>
+
+          <div class="property-control">
+            <label class="checkbox-container">
+              <input type="checkbox" id="useStroke">
+              <span class="info-label">Stroke Color</span>
+            </label>
+            <div class="color-picker-wrapper">
+              <input type="color" id="strokeColorPicker" value="#ffffff">
+              <input type="text" id="strokeHexText" value="#FFFFFF" style="padding: 4px 6px; font-size: 12px;">
+            </div>
+          </div>
+
+          <div class="property-control">
+            <div class="range-label">
+              <span class="info-label">Stroke Width</span>
+              <span id="strokeWidthVal" class="info-label">1.0</span>
+            </div>
+            <input type="range" id="strokeWidthSlider" min="0" max="20" step="0.5" value="1">
+          </div>
+
+          <div class="property-control">
+            <div class="range-label">
+              <span class="info-label">Opacity</span>
+              <span id="opacityVal" class="info-label">1.0</span>
+            </div>
+            <input type="range" id="opacitySlider" min="0" max="1" step="0.05" value="1">
+          </div>
+
+          <div class="property-control full-width">
+            <label class="checkbox-container">
+              <input type="checkbox" id="useTransform">
+              <span class="info-label">Transform</span>
+            </label>
+            <input type="text" id="transformInput" placeholder="e.g. translate(10, 20) scale(1.2)">
+          </div>
+
+          <div class="property-control">
+            <div class="range-label">
+              <span class="info-label">Move X (px)</span>
+              <span id="translateXVal" class="info-label">0</span>
+            </div>
+            <input type="range" id="translateXSlider" min="-500" max="500" step="1" value="0">
+          </div>
+
+          <div class="property-control">
+            <div class="range-label">
+              <span class="info-label">Move Y (px)</span>
+              <span id="translateYVal" class="info-label">0</span>
+            </div>
+            <input type="range" id="translateYSlider" min="-500" max="500" step="1" value="0">
+          </div>
+
+          <div class="property-control" id="borderRadiusControl">
+            <div class="range-label">
+              <span class="info-label">Border Radius</span>
+              <span id="borderRadiusVal" class="info-label">0</span>
+            </div>
+            <input type="range" id="borderRadiusSlider" min="0" max="100" step="1" value="0">
+          </div>
+
+          <div class="property-control full-width" style="margin-top: 8px; border-top: 1px solid var(--border-color); padding-top: 12px;">
+            <label class="checkbox-container">
+              <input type="checkbox" id="removeElement">
+              <span class="info-label" style="color: #f43f5e; font-weight: 600;">Remove/Delete Element</span>
+            </label>
+          </div>
+
+          <!-- Animation Options -->
+          <div class="property-control full-width" style="margin-top: 8px; border-top: 1px solid var(--border-color); padding-top: 12px;">
+            <span class="info-label" style="font-weight: 600; margin-bottom: 8px; display: block; color: var(--accent-primary);">Animation Options</span>
+            
+            <div class="property-control" style="margin-bottom: 8px;">
+              <span class="info-label" style="margin-bottom: 4px; display: block;">Direction (Mode)</span>
+              <select id="animDirection" style="width: 100%; background: rgba(15,23,42,0.6); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-main); padding: 8px; outline: none;">
+                <option value="loop">Loop (Restart)</option>
+                <option value="alternate">Yo-Yo (Alternate / Vai e Volta)</option>
+              </select>
+            </div>
+
+            <div class="property-control" style="margin-bottom: 8px;">
+              <span class="info-label" style="margin-bottom: 4px; display: block;">Easing (Suavização)</span>
+              <select id="animEasing" style="width: 100%; background: rgba(15,23,42,0.6); border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-main); padding: 8px; outline: none;">
+                <option value="linear">Linear (Constant Speed)</option>
+                <option value="spline">Ease In Out (Smooth / Suave)</option>
+              </select>
+            </div>
+
+            <div class="property-control">
+              <div class="range-label">
+                <span class="info-label">Speed Multiplier</span>
+                <span id="animSpeedVal" class="info-label">1.0x</span>
+              </div>
+              <input type="range" id="animSpeed" min="0.25" max="3" step="0.25" value="1" style="width: 100%;">
+            </div>
+          </div>
+        </div>
+
+        <div class="tabs-container">
+          <button class="tab-btn active" data-tab="svgTab">Modified SVG</button>
+          <button class="tab-btn" data-tab="flutterTab">Flutter Code</button>
+        </div>
+
+        <div id="svgTab" class="tab-content active" style="margin-top: 12px;">
+          <div class="code-box-container">
+            <button class="copy-btn" id="copySvgBtn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              Copy SVG
+            </button>
+            <pre><code id="svgCodeBlock"></code></pre>
+          </div>
+        </div>
+
+        <div id="flutterTab" class="tab-content" style="margin-top: 12px;">
+          <div class="code-box-container">
+            <button class="copy-btn" id="copyBtn">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              Copy Code
+            </button>
+            <pre><code id="dartCodeBlock"></code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div class="toast" id="toast">Code copied to clipboard!</div>
+
+  <script>
+    // Elements
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const svgCodeInput = document.getElementById('svgCodeInput');
+    const previewContainer = document.getElementById('previewContainer');
+    const inspectorEmptyState = document.getElementById('inspectorEmptyState');
+    const inspectorContent = document.getElementById('inspectorContent');
+
+    // Inspector Inputs
+    const tagNameVal = document.getElementById('tagNameVal');
+    const selectorsList = document.getElementById('selectorsList');
+    const useFill = document.getElementById('useFill');
+    const fillColorPicker = document.getElementById('fillColorPicker');
+    const fillHexText = document.getElementById('fillHexText');
+    const useStroke = document.getElementById('useStroke');
+    const strokeColorPicker = document.getElementById('strokeColorPicker');
+    const strokeHexText = document.getElementById('strokeHexText');
+    const strokeWidthSlider = document.getElementById('strokeWidthSlider');
+    const strokeWidthVal = document.getElementById('strokeWidthVal');
+    const opacitySlider = document.getElementById('opacitySlider');
+    const opacityVal = document.getElementById('opacityVal');
+    const useTransform = document.getElementById('useTransform');
+    const transformInput = document.getElementById('transformInput');
+    const translateXSlider = document.getElementById('translateXSlider');
+    const translateXVal = document.getElementById('translateXVal');
+    const translateYSlider = document.getElementById('translateYSlider');
+    const translateYVal = document.getElementById('translateYVal');
+    const removeElement = document.getElementById('removeElement');
+    const borderRadiusControl = document.getElementById('borderRadiusControl');
+    const borderRadiusSlider = document.getElementById('borderRadiusSlider');
+    const borderRadiusVal = document.getElementById('borderRadiusVal');
+    const svgCodeBlock = document.getElementById('svgCodeBlock');
+    const copySvgBtn = document.getElementById('copySvgBtn');
+    const dartCodeBlock = document.getElementById('dartCodeBlock');
+    const copyBtn = document.getElementById('copyBtn');
+    const toast = document.getElementById('toast');
+    
+    // Recorder Elements
+    const recorderBar = document.getElementById('recorderBar');
+    const recorderStatus = document.getElementById('recorderStatus');
+    const recordDot = document.getElementById('recordDot');
+    const recorderText = document.getElementById('recorderText');
+    const recordBtn = document.getElementById('recordBtn');
+    const optimizeBtn = document.getElementById('optimizeBtn');
+    const elementIdInput = document.getElementById('elementIdInput');
+    const elementClassInput = document.getElementById('elementClassInput');
+
+    // State
+    let activeElement = null;
+    let selectedSelector = '';
+
+    // Init Drag & Drop
+    dropZone.addEventListener('click', () => fileInput.click());
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('dragover');
+    });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      const file = e.dataTransfer.files[0];
+      if (file && file.type === 'image/svg+xml') {
+        readSvgFile(file);
+      }
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) readSvgFile(file);
+    });
+
+    svgCodeInput.addEventListener('input', (e) => {
+      loadSvgContent(e.target.value);
+    });
+
+    function readSvgFile(file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const content = e.target.result;
+        svgCodeInput.value = content;
+        loadSvgContent(content);
+      };
+      reader.readAsText(file);
+    }
+
+    function loadSvgContent(svgString) {
+      if (!svgString.trim()) {
+        previewContainer.innerHTML = `
+          <div class="empty-state">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375 0 11-.75 0 .375 0 01.75 0z" />
+            </svg>
+            <p>Import an SVG to start inspecting and editing elements.</p>
+          </div>
+        `;
+        inspectorEmptyState.style.display = 'flex';
+        inspectorContent.style.display = 'none';
+        activeElement = null;
+        recordBtn.disabled = true;
+        optimizeBtn.disabled = true;
+        recorderBar.classList.remove('active-svg');
+        return;
+      }
+
+      // Render SVG in preview container
+      previewContainer.innerHTML = svgString;
+      const svg = previewContainer.querySelector('svg');
+      if (!svg) {
+        previewContainer.innerHTML = '<p style="color: #f43f5e;">Invalid SVG content.</p>';
+        recordBtn.disabled = true;
+        optimizeBtn.disabled = true;
+        recorderBar.classList.remove('active-svg');
+        return;
+      }
+
+      // Enable recorder and optimizer
+      recordBtn.disabled = false;
+      optimizeBtn.disabled = false;
+      recorderBar.classList.add('active-svg');
+
+      // Add interactive classes and listeners to all children
+      const interactiveTags = ['path', 'rect', 'circle', 'ellipse', 'line', 'polyline', 'polygon', 'text'];
+      const elements = svg.querySelectorAll(interactiveTags.join(','));
+
+      elements.forEach((el, index) => {
+        el.classList.add('svg-interactive-item');
+        
+        // Auto-inject a unique ID if the element doesn't have one
+        if (!el.getAttribute('id')) {
+          el.setAttribute('id', `svg_el_${index + 1}`);
+        }
+        
+        el.addEventListener('click', (e) => {
+          e.stopPropagation();
+          selectElement(el);
+        });
+      });
+    }
+
+    function updateSelectorsList(resetSelection = false) {
+      if (!activeElement) return;
+
+      const id = activeElement.getAttribute('id');
+      const klass = activeElement.getAttribute('class');
+      const fill = activeElement.getAttribute('fill');
+      const stroke = activeElement.getAttribute('stroke');
+
+      const selectors = [];
+      if (id) {
+        selectors.push({ type: 'ID', value: `#${id}` });
+      }
+      if (klass) {
+        const cleanClass = klass
+          .replace('svg-interactive-item', '')
+          .replace('selected-element', '')
+          .replace('removed-preview-state', '')
+          .trim();
+        if (cleanClass) {
+          selectors.push({ type: 'Class', value: `.${cleanClass.split(' ').join('.')}` });
+        }
+      }
+      if (fill && fill !== 'none' && !fill.startsWith('url')) {
+        selectors.push({ type: 'Attribute (Fill)', value: `${activeElement.tagName}[fill="${fill}"]` });
+      }
+      if (stroke && stroke !== 'none') {
+        selectors.push({ type: 'Attribute (Stroke)', value: `${activeElement.tagName}[stroke="${stroke}"]` });
+      }
+      selectors.push({ type: 'Tag Name', value: activeElement.tagName });
+
+      if (resetSelection || !selectors.some(s => s.value === selectedSelector)) {
+        selectedSelector = selectors[0].value;
+      }
+
+      // Render Selector Options
+      selectorsList.innerHTML = '';
+      selectors.forEach((sel, idx) => {
+        const isSelected = selectedSelector === sel.value;
+        const div = document.createElement('div');
+        div.className = `selector-option ${isSelected ? 'active' : ''}`;
+        div.innerHTML = `
+          <input type="radio" name="querySelector" id="sel_${idx}" value="${sel.value}" ${isSelected ? 'checked' : ''}>
+          <div style="display: flex; flex-direction: column;">
+            <span style="font-size: 10px; color: var(--text-muted);">${sel.type}</span>
+            <span class="selector-text">${sel.value}</span>
+          </div>
+        `;
+        div.addEventListener('click', () => {
+          div.querySelector('input').checked = true;
+          document.querySelectorAll('.selector-option').forEach(o => o.classList.remove('active'));
+          div.classList.add('active');
+          selectedSelector = sel.value;
+          updateGeneratedCode();
+        });
+        selectorsList.appendChild(div);
+      });
+    }
+
+    function selectElement(el) {
+      if (activeElement) {
+        activeElement.classList.remove('selected-element');
+      }
+      activeElement = el;
+      activeElement.classList.add('selected-element');
+
+      // Show Inspector
+      inspectorEmptyState.style.display = 'none';
+      inspectorContent.style.display = 'flex';
+
+      // Load Details
+      tagNameVal.textContent = el.tagName;
+
+      // Populate ID and Class inputs
+      elementIdInput.value = el.getAttribute('id') || '';
+      const cleanClass = (el.getAttribute('class') || '')
+        .replace('svg-interactive-item', '')
+        .replace('selected-element', '')
+        .replace('removed-preview-state', '')
+        .trim();
+      elementClassInput.value = cleanClass;
+      
+      const fill = el.getAttribute('fill');
+      const stroke = el.getAttribute('stroke');
+
+      // Generate Selectors
+      updateSelectorsList(true);
+
+      // Populate properties
+      // Fill
+      if (fill && fill !== 'none' && !fill.startsWith('url')) {
+        useFill.checked = true;
+        const hex = rgbOrHexToHex(fill);
+        fillColorPicker.value = hex;
+        fillHexText.value = hex.toUpperCase();
+      } else {
+        useFill.checked = false;
+      }
+
+      // Stroke
+      if (stroke && stroke !== 'none') {
+        useStroke.checked = true;
+        const hex = rgbOrHexToHex(stroke);
+        strokeColorPicker.value = hex;
+        strokeHexText.value = hex.toUpperCase();
+      } else {
+        useStroke.checked = false;
+      }
+
+      // Stroke Width
+      const strokeWidth = el.getAttribute('stroke-width');
+      if (strokeWidth) {
+        strokeWidthSlider.value = strokeWidth;
+        strokeWidthVal.textContent = parseFloat(strokeWidth).toFixed(1);
+      } else {
+        strokeWidthSlider.value = 1;
+        strokeWidthVal.textContent = '1.0';
+      }
+
+      // Opacity
+      const opacity = el.getAttribute('opacity') || el.style.opacity;
+      if (opacity) {
+        opacitySlider.value = opacity;
+        opacityVal.textContent = parseFloat(opacity).toFixed(2);
+      } else {
+        opacitySlider.value = 1;
+        opacityVal.textContent = '1.0';
+      }
+
+      // Transform & Translate
+      const transform = el.getAttribute('transform');
+      if (transform) {
+        useTransform.checked = true;
+        transformInput.value = transform;
+
+        // Parse translate(x, y)
+        const translateMatch = transform.match(/translate\(\s*(-?\d+(?:\.\d+)?)\s*(?:,\s*|\s+)?(-?\d+(?:\.\d+)?)?\s*\)/);
+        if (translateMatch) {
+          const tx = Math.round(parseFloat(translateMatch[1]));
+          const ty = translateMatch[2] ? Math.round(parseFloat(translateMatch[2])) : 0;
+          translateXSlider.value = tx;
+          translateXVal.textContent = tx;
+          translateYSlider.value = ty;
+          translateYVal.textContent = ty;
+        } else {
+          translateXSlider.value = 0;
+          translateXVal.textContent = '0';
+          translateYSlider.value = 0;
+          translateYVal.textContent = '0';
+        }
+      } else {
+        useTransform.checked = false;
+        transformInput.value = '';
+        translateXSlider.value = 0;
+        translateXVal.textContent = '0';
+        translateYSlider.value = 0;
+        translateYVal.textContent = '0';
+      }
+
+      // Border Radius (for rects)
+      if (el.tagName === 'rect') {
+        borderRadiusSlider.disabled = false;
+        borderRadiusControl.style.opacity = '1';
+        const rx = el.getAttribute('rx') || el.getAttribute('ry') || '0';
+        borderRadiusSlider.value = rx;
+        borderRadiusVal.textContent = Math.round(parseFloat(rx));
+      } else {
+        borderRadiusSlider.disabled = true;
+        borderRadiusControl.style.opacity = '0.5';
+        borderRadiusSlider.value = 0;
+        borderRadiusVal.textContent = '0 (Only for rects)';
+      }
+
+      // Remove / Delete state
+      removeElement.checked = el.classList.contains('removed-preview-state');
+
+      // Load animation settings for this element if they exist
+      if (allAnimations[selectedSelector]) {
+        const animData = allAnimations[selectedSelector];
+        animDirection.value = animData.direction;
+        animEasing.value = animData.easing;
+        animSpeed.value = animData.speed;
+        animSpeedVal.textContent = animData.speed.toFixed(2) + 'x';
+      } else {
+        animDirection.value = 'loop';
+        animEasing.value = 'linear';
+        animSpeed.value = 1;
+        animSpeedVal.textContent = '1.00x';
+      }
+
+      updateGeneratedCode();
+    }
+
+    // Convert colors helper
+    function rgbOrHexToHex(color) {
+      if (color.startsWith('#')) {
+        if (color.length === 4) {
+          return `#${color[1]}${color[1]}${color[2]}${color[2]}${color[3]}${color[3]}`;
+        }
+        return color;
+      }
+      if (color.startsWith('rgb')) {
+        const rgb = color.match(/\d+/g);
+        if (rgb) {
+          return "#" + ((1 << 24) + (parseInt(rgb[0]) << 16) + (parseInt(rgb[1]) << 8) + parseInt(rgb[2])).toString(16).slice(1);
+        }
+      }
+      return '#ffffff';
+    }
+
+    function hexToFlutterColor(hex) {
+      hex = hex.replace('#', '').toUpperCase();
+      if (hex.length === 6) {
+        return `Color(0xFF${hex})`;
+      }
+      return `Color(0x${hex})`;
+    }
+
+    function formatXml(xml) {
+      let formatted = '';
+      const reg = /(>)(<)(\/*)/g;
+      xml = xml.replace(reg, '$1\r\n$2$3');
+      let pad = 0;
+      xml.split('\r\n').forEach((node) => {
+        let indent = 0;
+        if (node.match(/.+<\/\w[^>]*>$/)) {
+          indent = 0;
+        } else if (node.match(/^<\/\w/)) {
+          if (pad !== 0) {
+            pad -= 1;
+          }
+        } else if (node.match(/^<\w[^>]*[^\/]>$/)) {
+          indent = 1;
+        } else {
+          indent = 0;
+        }
+
+        let padding = '';
+        for (let i = 0; i < pad; i++) {
+          padding += '  ';
+        }
+
+        formatted += padding + node + '\r\n';
+        pad += indent;
+      });
+
+      return formatted.trim();
+    }
+
+    // Real-time preview and code generation
+    function updateGeneratedCode() {
+      if (!activeElement) return;
+
+      const fillEnabled = useFill.checked;
+      const strokeEnabled = useStroke.checked;
+      const transformEnabled = useTransform.checked;
+
+      const fillHex = fillColorPicker.value;
+      const strokeHex = strokeColorPicker.value;
+      const strokeWidth = strokeWidthSlider.value;
+      const opacity = opacitySlider.value;
+      const transform = transformInput.value;
+
+      // Update Preview SVG element in real-time
+      if (fillEnabled) {
+        activeElement.setAttribute('fill', fillHex);
+        activeElement.style.fill = fillHex;
+      } else {
+        activeElement.removeAttribute('fill');
+        activeElement.style.fill = '';
+      }
+
+      if (strokeEnabled) {
+        activeElement.setAttribute('stroke', strokeHex);
+        activeElement.setAttribute('stroke-width', strokeWidth);
+        activeElement.style.stroke = strokeHex;
+        activeElement.style.strokeWidth = strokeWidth + 'px';
+      } else {
+        activeElement.removeAttribute('stroke');
+        activeElement.removeAttribute('stroke-width');
+        activeElement.style.stroke = '';
+        activeElement.style.strokeWidth = '';
+      }
+
+      // Update Border Radius (for rects)
+      if (activeElement.tagName === 'rect') {
+        const brVal = borderRadiusSlider.value;
+        if (parseFloat(brVal) > 0) {
+          activeElement.setAttribute('rx', brVal);
+          activeElement.setAttribute('ry', brVal);
+        } else {
+          activeElement.removeAttribute('rx');
+          activeElement.removeAttribute('ry');
+        }
+      }
+
+      activeElement.setAttribute('opacity', opacity);
+      activeElement.style.opacity = opacity;
+
+      if (transformEnabled && transform) {
+        activeElement.setAttribute('transform', transform);
+      } else {
+        activeElement.removeAttribute('transform');
+      }
+
+      // Remove / Delete state
+      const isRemoved = removeElement.checked;
+      if (isRemoved) {
+        activeElement.classList.add('removed-preview-state');
+      } else {
+        activeElement.classList.remove('removed-preview-state');
+      }
+
+      // Generate Flutter Dart Code
+      let code = `ElementEdit(\n`;
+      code += `  querySelector: '${selectedSelector}',\n`;
+      
+      if (isRemoved) {
+        code += `  remove: true,\n`;
+      } else {
+        if (fillEnabled) {
+          code += `  fillColor: ${hexToFlutterColor(fillHex)},\n`;
+        }
+        if (strokeEnabled) {
+          code += `  strokeColor: ${hexToFlutterColor(strokeHex)},\n`;
+          code += `  strokeWidth: ${strokeWidth},\n`;
+        }
+        if (opacity !== '1' && opacity !== '1.0') {
+          code += `  opacity: ${opacity},\n`;
+        }
+        if (transformEnabled && transform) {
+          code += `  transform: '${transform}',\n`;
+        }
+        if (activeElement.tagName === 'rect') {
+          const brVal = borderRadiusSlider.value;
+          if (parseFloat(brVal) > 0) {
+            code += `  borderRadius: ${brVal},\n`;
+          }
+        }
+      }
+      code += `)`;
+
+      dartCodeBlock.textContent = code;
+
+      // Generate and display Modified SVG XML
+      const svgEl = previewContainer.querySelector('svg');
+      if (svgEl) {
+        const clone = svgEl.cloneNode(true);
+        
+        // Remove all deleted elements
+        clone.querySelectorAll('.removed-preview-state').forEach(el => el.remove());
+        
+        // Clean up temporary interactive classes and styles
+        clone.querySelectorAll('.svg-interactive-item').forEach(el => {
+          el.classList.remove('svg-interactive-item');
+          el.classList.remove('selected-element');
+          if (el.classList.length === 0) {
+            el.removeAttribute('class');
+          }
+          if (el.style.length === 0) {
+            el.removeAttribute('style');
+          }
+        });
+
+        // Format the XML
+        const rawXml = clone.outerHTML;
+        svgCodeBlock.textContent = formatXml(rawXml);
+      }
+    }
+
+    // Event Listeners for Live Preview
+    useFill.addEventListener('change', updateGeneratedCode);
+    fillColorPicker.addEventListener('input', (e) => {
+      fillHexText.value = e.target.value.toUpperCase();
+      updateGeneratedCode();
+    });
+    fillHexText.addEventListener('input', (e) => {
+      let val = e.target.value;
+      if (val.startsWith('#') && (val.length === 4 || val.length === 7)) {
+        fillColorPicker.value = val;
+        updateGeneratedCode();
+      }
+    });
+
+    useStroke.addEventListener('change', updateGeneratedCode);
+    strokeColorPicker.addEventListener('input', (e) => {
+      strokeHexText.value = e.target.value.toUpperCase();
+      updateGeneratedCode();
+    });
+    strokeHexText.addEventListener('input', (e) => {
+      let val = e.target.value;
+      if (val.startsWith('#') && (val.length === 4 || val.length === 7)) {
+        strokeColorPicker.value = val;
+        updateGeneratedCode();
+      }
+    });
+
+    strokeWidthSlider.addEventListener('input', (e) => {
+      strokeWidthVal.textContent = parseFloat(e.target.value).toFixed(1);
+      updateGeneratedCode();
+    });
+
+    opacitySlider.addEventListener('input', (e) => {
+      opacityVal.textContent = parseFloat(e.target.value).toFixed(2);
+      updateGeneratedCode();
+    });
+
+    useTransform.addEventListener('change', updateGeneratedCode);
+    transformInput.addEventListener('input', updateGeneratedCode);
+
+    function updateTransformFromSliders() {
+      const tx = translateXSlider.value;
+      const ty = translateYSlider.value;
+      
+      translateXVal.textContent = tx;
+      translateYVal.textContent = ty;
+      
+      const translateStr = `translate(${tx}, ${ty})`;
+      let currentVal = transformInput.value.trim();
+      
+      if (currentVal.includes('translate')) {
+        transformInput.value = currentVal.replace(/translate\(\s*(-?\d+(?:\.\d+)?)\s*(?:,\s*|\s+)?(-?\d+(?:\.\d+)?)?\s*\)/, translateStr);
+      } else {
+        transformInput.value = currentVal ? `${currentVal} ${translateStr}` : translateStr;
+      }
+      
+      useTransform.checked = true;
+      updateGeneratedCode();
+    }
+
+    borderRadiusSlider.addEventListener('input', (e) => {
+      borderRadiusVal.textContent = e.target.value;
+      updateGeneratedCode();
+    });
+
+    translateXSlider.addEventListener('input', updateTransformFromSliders);
+    translateYSlider.addEventListener('input', updateTransformFromSliders);
+    removeElement.addEventListener('change', updateGeneratedCode);
+
+    elementIdInput.addEventListener('input', (e) => {
+      if (!activeElement) return;
+      const newId = e.target.value.trim().replace(/\s+/g, '-');
+      const oldSelector = selectedSelector;
+      
+      if (newId) {
+        activeElement.setAttribute('id', newId);
+        const newSelector = '#' + newId;
+        
+        if (allAnimations[oldSelector]) {
+          allAnimations[newSelector] = allAnimations[oldSelector];
+          delete allAnimations[oldSelector];
+        }
+        selectedSelector = newSelector;
+      } else {
+        activeElement.removeAttribute('id');
+      }
+      
+      updateSelectorsList();
+      updateGeneratedCode();
+    });
+
+    elementClassInput.addEventListener('input', (e) => {
+      if (!activeElement) return;
+      const newClass = e.target.value.trim();
+      
+      let classes = ['svg-interactive-item'];
+      if (activeElement.classList.contains('selected-element')) classes.push('selected-element');
+      if (activeElement.classList.contains('removed-preview-state')) classes.push('removed-preview-state');
+      
+      if (newClass) {
+        newClass.split(/\s+/).forEach(c => classes.push(c));
+      }
+      
+      activeElement.setAttribute('class', classes.join(' '));
+      
+      updateSelectorsList();
+      updateGeneratedCode();
+    });
+
+    // Mouse Drag and Drop to Move Element
+    let isDragging = false;
+    let hasDragged = false;
+    let dragStartX = 0;
+    let dragStartY = 0;
+    let dragStartTx = 0;
+    let dragStartTy = 0;
+
+    previewContainer.addEventListener('mousedown', (e) => {
+      const el = e.target.closest('.svg-interactive-item');
+      if (!el) return;
+
+      selectElement(el);
+
+      isDragging = true;
+      hasDragged = false;
+      dragStartX = e.clientX;
+      dragStartY = e.clientY;
+      
+      dragStartTx = parseInt(translateXSlider.value) || 0;
+      dragStartTy = parseInt(translateYSlider.value) || 0;
+
+      e.preventDefault();
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isDragging || !activeElement) return;
+
+      const dx = e.clientX - dragStartX;
+      const dy = e.clientY - dragStartY;
+
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+        hasDragged = true;
+      }
+
+      const newTx = dragStartTx + dx;
+      const newTy = dragStartTy + dy;
+
+      const clampedTx = Math.max(-500, Math.min(500, newTx));
+      const clampedTy = Math.max(-500, Math.min(500, newTy));
+
+      translateXSlider.value = clampedTx;
+      translateYSlider.value = clampedTy;
+
+      updateTransformFromSliders();
+    });
+
+    window.addEventListener('mouseup', () => {
+      isDragging = false;
+    });
+
+    // Intercept clicks on mouseup if dragging occurred to prevent changing selection
+    previewContainer.addEventListener('click', (e) => {
+      if (hasDragged) {
+        e.preventDefault();
+        e.stopPropagation();
+        hasDragged = false;
+      }
+    }, true);
+
+    // SVG Animation Recorder Logic (Multi-Element Native SMIL)
+    let isRecording = false;
+    let recordedKeyframes = {};
+    let recordInterval = null;
+    let recordingStartTime = 0;
+    let timerInterval = null;
+
+    // Stores all recorded animations: { selector: { frames, totalDuration, direction, easing, speed } }
+    const allAnimations = {};
+
+    const animDirection = document.getElementById('animDirection');
+    const animEasing = document.getElementById('animEasing');
+    const animSpeed = document.getElementById('animSpeed');
+    const animSpeedVal = document.getElementById('animSpeedVal');
+
+    function showToast(message) {
+      toast.innerHTML = message;
+      toast.classList.add('show');
+      setTimeout(() => {
+        toast.classList.remove('show');
+      }, 4000);
+    }
+
+    function startRecording() {
+      const svgEl = previewContainer.querySelector('svg');
+      if (!svgEl || !activeElement) return;
+
+      // Temporarily remove animation elements from the active element so it stands still for dragging
+      activeElement.querySelectorAll('animate, animateTransform').forEach(anim => anim.remove());
+
+      recordedKeyframes = {};
+      isRecording = true;
+      recordingStartTime = Date.now();
+
+      // Update UI
+      recordBtn.classList.add('recording');
+      recordBtn.innerHTML = `
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+          <rect x="4" y="4" width="16" height="16" rx="2"></rect>
+        </svg>
+        Stop & Save
+      `;
+      recordDot.classList.add('recording');
+      recorderStatus.classList.add('recording');
+
+      // Timer
+      timerInterval = setInterval(() => {
+        const elapsed = ((Date.now() - recordingStartTime) / 1000).toFixed(1);
+        recorderText.textContent = `Recording: ${elapsed}s`;
+      }, 100);
+
+      // Polling loop at 10 FPS (100ms) to capture changes
+      recordInterval = setInterval(() => {
+        if (!activeElement) return;
+
+        if (!recordedKeyframes[selectedSelector]) {
+          recordedKeyframes[selectedSelector] = [];
+        }
+
+        const frames = recordedKeyframes[selectedSelector];
+        const tx = translateXSlider.value;
+        const ty = translateYSlider.value;
+        const fill = useFill.checked ? fillColorPicker.value : '';
+        const stroke = useStroke.checked ? strokeColorPicker.value : '';
+        const opacity = opacitySlider.value;
+
+        frames.push({
+          time: (Date.now() - recordingStartTime) / 1000,
+          tx: parseFloat(tx),
+          ty: parseFloat(ty),
+          fill: fill,
+          stroke: stroke,
+          opacity: parseFloat(opacity)
+        });
+      }, 100);
+
+      showToast('Recording started! Drag elements or change colors now.');
+    }
+
+    function smoothPath(frames) {
+      if (frames.length < 3) return frames;
+      
+      const smoothed = [];
+      smoothed.push({ ...frames[0] });
+      
+      for (let i = 1; i < frames.length - 1; i++) {
+        const prev = frames[i - 1];
+        const curr = frames[i];
+        const next = frames[i + 1];
+        
+        smoothed.push({
+          ...curr,
+          tx: Math.round((prev.tx + curr.tx + next.tx) / 3),
+          ty: Math.round((prev.ty + curr.ty + next.ty) / 3)
+        });
+      }
+      
+      smoothed.push({ ...frames[frames.length - 1] });
+      return smoothed;
+    }
+
+    function stopRecording() {
+      if (!isRecording) return;
+      isRecording = false;
+      
+      clearInterval(recordInterval);
+      clearInterval(timerInterval);
+
+      const totalDuration = (Date.now() - recordingStartTime) / 1000;
+
+      // Reset UI
+      recordBtn.classList.remove('recording');
+      recordBtn.innerHTML = `
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+          <circle cx="12" cy="12" r="10"></circle>
+        </svg>
+        Record Action
+      `;
+      recordDot.classList.remove('recording');
+      recorderStatus.classList.remove('recording');
+      recorderText.textContent = 'Ready to Record';
+
+      if (totalDuration < 0.5) {
+        showToast('Recording too short!');
+        return;
+      }
+
+      // Apply double-pass moving average filter to smooth out mouse tremors
+      if (recordedKeyframes[selectedSelector]) {
+        recordedKeyframes[selectedSelector] = smoothPath(recordedKeyframes[selectedSelector]);
+        recordedKeyframes[selectedSelector] = smoothPath(recordedKeyframes[selectedSelector]);
+
+        // Save to global animations dictionary
+        allAnimations[selectedSelector] = {
+          frames: recordedKeyframes[selectedSelector],
+          totalDuration: totalDuration,
+          direction: animDirection.value,
+          easing: animEasing.value,
+          speed: parseFloat(animSpeed.value)
+        };
+
+        // Inject the animation
+        injectAnimationForElement(selectedSelector);
+        showToast('Animation saved for this element! You can select another element to animate it too.');
+      }
+    }
+
+    function injectAnimationForElement(selector) {
+      const animData = allAnimations[selector];
+      if (!animData) return;
+
+      const svgEl = previewContainer.querySelector('svg');
+      if (!svgEl) return;
+
+      const el = svgEl.querySelector(selector);
+      if (!el) return;
+
+      // Clear existing animations for this element
+      el.querySelectorAll('animate, animateTransform').forEach(anim => anim.remove());
+
+      const frames = animData.frames;
+      if (frames.length < 2) return;
+
+      const firstFrame = frames[0];
+
+      // Process frames for Alternate (Yo-Yo) direction
+      let processedFrames = [...frames];
+      let baseDuration = animData.totalDuration;
+
+      if (animData.direction === 'alternate') {
+        const reversed = [];
+        for (let i = frames.length - 2; i >= 0; i--) {
+          const f = frames[i];
+          const revTime = animData.totalDuration + (animData.totalDuration - f.time);
+          reversed.push({
+            ...f,
+            time: revTime
+          });
+        }
+        processedFrames = processedFrames.concat(reversed);
+        baseDuration = animData.totalDuration * 2;
+      }
+
+      // Apply speed multiplier
+      const finalDuration = baseDuration / animData.speed;
+      const maxTime = processedFrames[processedFrames.length - 1].time;
+
+      function applyEasing(animElement, numFrames) {
+        if (animData.easing === 'spline' && numFrames > 1) {
+          animElement.setAttribute('calcMode', 'spline');
+          const splines = [];
+          for (let i = 0; i < numFrames - 1; i++) {
+            splines.push('0.4 0 0.2 1');
+          }
+          animElement.setAttribute('keySplines', splines.join('; '));
+        } else {
+          animElement.setAttribute('calcMode', 'linear');
+        }
+      }
+
+      // 1. Translation Animation
+      let hasTranslateVariation = false;
+      for (let i = 1; i < processedFrames.length; i++) {
+        if (processedFrames[i].tx !== firstFrame.tx || processedFrames[i].ty !== firstFrame.ty) {
+          hasTranslateVariation = true;
+          break;
+        }
+      }
+
+      if (hasTranslateVariation) {
+        const translateValues = [];
+        const keyTimes = [];
+        
+        processedFrames.forEach((f, index) => {
+          let kt = f.time / maxTime;
+          if (index === 0) kt = 0;
+          if (index === processedFrames.length - 1) kt = 1;
+          
+          translateValues.push(`${f.tx},${f.ty}`);
+          keyTimes.push(kt.toFixed(3));
+        });
+
+        const anim = document.createElementNS('http://www.w3.org/2000/svg', 'animateTransform');
+        anim.setAttribute('attributeName', 'transform');
+        anim.setAttribute('type', 'translate');
+        anim.setAttribute('values', translateValues.join('; '));
+        anim.setAttribute('keyTimes', keyTimes.join('; '));
+        anim.setAttribute('dur', `${finalDuration.toFixed(2)}s`);
+        anim.setAttribute('repeatCount', 'indefinite');
+        applyEasing(anim, processedFrames.length);
+        el.appendChild(anim);
+      }
+
+      // 2. Fill Color Animation
+      let hasFillVariation = false;
+      for (let i = 1; i < processedFrames.length; i++) {
+        if (processedFrames[i].fill !== firstFrame.fill) {
+          hasFillVariation = true;
+          break;
+        }
+      }
+
+      if (hasFillVariation) {
+        const fillValues = [];
+        const keyTimes = [];
+        
+        processedFrames.forEach((f, index) => {
+          let kt = f.time / maxTime;
+          if (index === 0) kt = 0;
+          if (index === processedFrames.length - 1) kt = 1;
+          
+          fillValues.push(f.fill || '#ffffff');
+          keyTimes.push(kt.toFixed(3));
+        });
+
+        const anim = document.createElementNS('http://www.w3.org/2000/svg', 'animate');
+        anim.setAttribute('attributeName', 'fill');
+        anim.setAttribute('values', fillValues.join('; '));
+        anim.setAttribute('keyTimes', keyTimes.join('; '));
+        anim.setAttribute('dur', `${finalDuration.toFixed(2)}s`);
+        anim.setAttribute('repeatCount', 'indefinite');
+        applyEasing(anim, processedFrames.length);
+        el.appendChild(anim);
+      }
+
+      // 3. Opacity Animation
+      let hasOpacityVariation = false;
+      for (let i = 1; i < processedFrames.length; i++) {
+        if (processedFrames[i].opacity !== firstFrame.opacity) {
+          hasOpacityVariation = true;
+          break;
+        }
+      }
+
+      if (hasOpacityVariation) {
+        const opacityValues = [];
+        const keyTimes = [];
+        
+        processedFrames.forEach((f, index) => {
+          let kt = f.time / maxTime;
+          if (index === 0) kt = 0;
+          if (index === processedFrames.length - 1) kt = 1;
+          
+          opacityValues.push(f.opacity);
+          keyTimes.push(kt.toFixed(3));
+        });
+
+        const anim = document.createElementNS('http://www.w3.org/2000/svg', 'animate');
+        anim.setAttribute('attributeName', 'opacity');
+        anim.setAttribute('values', opacityValues.join('; '));
+        anim.setAttribute('keyTimes', keyTimes.join('; '));
+        anim.setAttribute('dur', `${finalDuration.toFixed(2)}s`);
+        anim.setAttribute('repeatCount', 'indefinite');
+        applyEasing(anim, processedFrames.length);
+        el.appendChild(anim);
+      }
+
+      // Force refresh of the code blocks
+      updateGeneratedCode();
+    }
+
+    recordBtn.addEventListener('click', () => {
+      if (isRecording) {
+        stopRecording();
+      } else {
+        startRecording();
+      }
+    });
+
+    // Handle Animation Settings Real-Time Updates per Element
+    function updateAnimationSetting() {
+      if (!allAnimations[selectedSelector]) return;
+      
+      allAnimations[selectedSelector].direction = animDirection.value;
+      allAnimations[selectedSelector].easing = animEasing.value;
+      allAnimations[selectedSelector].speed = parseFloat(animSpeed.value);
+      
+      injectAnimationForElement(selectedSelector);
+    }
+
+    animDirection.addEventListener('change', updateAnimationSetting);
+    animEasing.addEventListener('change', updateAnimationSetting);
+    animSpeed.addEventListener('input', (e) => {
+      animSpeedVal.textContent = parseFloat(e.target.value).toFixed(2) + 'x';
+      updateAnimationSetting();
+    });
+
+    function optimizeSvgForFlutter(svgEl) {
+      // 1. Ensure viewBox is present
+      const width = svgEl.getAttribute('width');
+      const height = svgEl.getAttribute('height');
+      const viewBox = svgEl.getAttribute('viewBox');
+      if (!viewBox && width && height) {
+        const w = parseFloat(width);
+        const h = parseFloat(height);
+        if (!isNaN(w) && !isNaN(h)) {
+          svgEl.setAttribute('viewBox', `0 0 ${w} ${h}`);
+        }
+      }
+
+      // 2. Parse and inline <style> tags
+      const styleTags = svgEl.querySelectorAll('style');
+      styleTags.forEach(styleTag => {
+        const cssText = styleTag.textContent;
+        const ruleRegex = /([^{]+)\s*\{\s*([^}]+)\s*\}/g;
+        let match;
+        while ((match = ruleRegex.exec(cssText)) !== null) {
+          const selector = match[1].trim();
+          const rulesStr = match[2].trim();
+          
+          const rules = {};
+          rulesStr.split(';').forEach(rule => {
+            const parts = rule.split(':');
+            if (parts.length === 2) {
+              rules[parts[0].trim()] = parts[1].trim();
+            }
+          });
+
+          try {
+            const matchedElements = svgEl.querySelectorAll(selector);
+            matchedElements.forEach(el => {
+              for (const prop in rules) {
+                if (['fill', 'stroke', 'stroke-width', 'opacity', 'display', 'stop-color', 'stop-opacity'].includes(prop)) {
+                  el.setAttribute(prop, rules[prop]);
+                } else {
+                  el.style[prop] = rules[prop];
+                }
+              }
+            });
+          } catch (e) {
+            console.warn('Failed to apply CSS selector:', selector, e);
+          }
+        }
+        styleTag.remove();
+      });
+
+      // 3. Remove metadata, script, and editor-specific tags
+      const tagsToRemove = ['script', 'metadata', 'foreignObject', 'sodipodi:namedview'];
+      tagsToRemove.forEach(tag => {
+        svgEl.querySelectorAll(tag).forEach(el => el.remove());
+      });
+
+      // 4. Clean attributes (namespaces, editor metadata)
+      const allElements = svgEl.querySelectorAll('*');
+      allElements.forEach(el => {
+        const attrs = Array.from(el.attributes);
+        attrs.forEach(attr => {
+          const name = attr.name;
+          if (
+            name.startsWith('inkscape:') || 
+            name.startsWith('sodipodi:') || 
+            name.startsWith('adobe:') || 
+            name.startsWith('i:') ||
+            name === 'xml:space'
+          ) {
+            el.removeAttribute(name);
+          }
+          
+          if (name === 'xlink:href') {
+            el.setAttribute('href', attr.value);
+            el.removeAttribute('xlink:href');
+          }
+        });
+      });
+
+      // 5. Clean main <svg> namespaces
+      const svgAttrs = Array.from(svgEl.attributes);
+      svgAttrs.forEach(attr => {
+        if (attr.name.startsWith('xmlns:') && attr.name !== 'xmlns:xlink') {
+          const val = attr.value;
+          if (val.includes('sodipodi') || val.includes('inkscape') || val.includes('adobe')) {
+            svgEl.removeAttribute(attr.name);
+          }
+        }
+      });
+    }
+
+    optimizeBtn.addEventListener('click', () => {
+      const svgEl = previewContainer.querySelector('svg');
+      if (!svgEl) return;
+
+      optimizeSvgForFlutter(svgEl);
+
+      // Re-setup interactive elements
+      const interactiveTags = ['path', 'rect', 'circle', 'ellipse', 'line', 'polyline', 'polygon', 'text'];
+      const elements = svgEl.querySelectorAll(interactiveTags.join(','));
+
+      elements.forEach((el, index) => {
+        el.classList.add('svg-interactive-item');
+        if (!el.getAttribute('id')) {
+          el.setAttribute('id', `svg_el_${index + 1}`);
+        }
+        
+        const clone = el.cloneNode(true);
+        el.parentNode.replaceChild(clone, el);
+        
+        clone.addEventListener('click', (e) => {
+          e.stopPropagation();
+          selectElement(clone);
+        });
+      });
+
+      // Update the textarea with the optimized SVG
+      const cleanClone = svgEl.cloneNode(true);
+      cleanClone.querySelectorAll('.svg-interactive-item').forEach(el => {
+        el.classList.remove('svg-interactive-item');
+        el.classList.remove('selected-element');
+        if (el.classList.length === 0) el.removeAttribute('class');
+        if (el.style.length === 0) el.removeAttribute('style');
+      });
+      const optimizedXml = formatXml(cleanClone.outerHTML);
+      svgCodeInput.value = optimizedXml;
+
+      updateGeneratedCode();
+      showToast('SVG successfully optimized for Flutter!');
+    });
+
+    // Tab Switching Logic
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.tab).classList.add('active');
+      });
+    });
+
+    // Copy to Clipboard (Flutter Code)
+    copyBtn.addEventListener('click', () => {
+      const code = dartCodeBlock.textContent;
+      navigator.clipboard.writeText(code).then(() => {
+        copyBtn.classList.add('copied');
+        copyBtn.innerHTML = `
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          Copied!
+        `;
+        
+        toast.textContent = 'Code copied to clipboard!';
+        toast.classList.add('show');
+
+        setTimeout(() => {
+          copyBtn.classList.remove('copied');
+          copyBtn.innerHTML = `
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            Copy Code
+          `;
+          toast.classList.remove('show');
+        }, 2000);
+      });
+    });
+
+    // Copy to Clipboard (Modified SVG XML)
+    copySvgBtn.addEventListener('click', () => {
+      const xml = svgCodeBlock.textContent;
+      navigator.clipboard.writeText(xml).then(() => {
+        copySvgBtn.classList.add('copied');
+        copySvgBtn.innerHTML = `
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+          Copied!
+        `;
+        
+        toast.textContent = 'SVG copied to clipboard!';
+        toast.classList.add('show');
+
+        setTimeout(() => {
+          copySvgBtn.classList.remove('copied');
+          copySvgBtn.innerHTML = `
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+            </svg>
+            Copy SVG
+          `;
+          toast.classList.remove('show');
+        }, 2000);
+      });
+    });
+  </script>
+</body>
+</html>

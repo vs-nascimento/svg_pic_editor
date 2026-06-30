@@ -20,8 +20,6 @@ class MyApp extends StatefulWidget {
 class MyAppState extends State<MyApp> with TickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<Color?> _animation;
-  late final GlobalKey<TickerProviderStateMixin> _key =
-      GlobalKey<TickerProviderStateMixin>();
   ValueNotifier<List<SvgElement>> parts = ValueNotifier([]);
   final ValueNotifier<List<SvgColorElement>> svgColorElements =
       ValueNotifier([]);
@@ -54,11 +52,11 @@ class MyAppState extends State<MyApp> with TickerProviderStateMixin {
     "elements": [
       {
         "querySelector": "path[fill='#5dc1cf']",
-        "fillColor": Colors.red.value,
+        "fillColor": Colors.red.toARGB32(),
       },
       {
         "querySelector": "path[fill='#50a8b4']",
-        "fillColor": Colors.blue.value,
+        "fillColor": Colors.blue.toARGB32(),
       },
     ],
   };
@@ -77,7 +75,7 @@ class MyAppState extends State<MyApp> with TickerProviderStateMixin {
 
   // Generate a random color
   Color randomColor() {
-    return Color((Random().nextDouble() * 0xFFFFFF).toInt()).withOpacity(1.0);
+    return Color((Random().nextDouble() * 0xFFFFFF).toInt()).withValues(alpha: 1.0);
   }
 
   @override
@@ -103,7 +101,7 @@ class MyAppState extends State<MyApp> with TickerProviderStateMixin {
                         width: 200,
                         height: 200,
                         fit: BoxFit.cover,
-                        onTap: () {},
+                        onTap: (_) {},
                         modifications: [
                           ElementEdit(
                             querySelector: "#bulbo",
@@ -157,7 +155,7 @@ class MyAppState extends State<MyApp> with TickerProviderStateMixin {
                       decoration: BoxDecoration(
                         border: Border.all(color: Colors.black),
                         borderRadius: BorderRadius.circular(10),
-                        color: Colors.white.withOpacity(0.8),
+                        color: Colors.white.withValues(alpha: 0.8),
                       ),
                       child: GridView.builder(
                         gridDelegate:
